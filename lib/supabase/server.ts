@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { cache } from "react";
 
 export async function createClient() {
   const cookieStore = await cookies();
@@ -21,12 +22,15 @@ export async function createClient() {
   );
 }
 
-/** Cliente + usuario con sesión; las rutas protegidas ya pasaron por el middleware. */
-export async function requireUser() {
+/**
+ * Cliente + usuario con sesión. `cache` hace que layout y página compartan una sola
+ * verificación por petición. `getClaims` valida la firma del token localmente cuando el
+ * proyecto usa claves de firma asimétricas (si no, consulta a Supabase Auth como getUser).
+ */
+export const requireUser = cache(async () => {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Sesión expirada. Vuelve a ingresar.");
-  return { supabase, user };
-}
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (!claims?.sub) throw new Error("Sesión expirada. Vuelve a ingresar.");
+  return { supabase, user: { id: claims.sub, email: claims.email as string | undefined } };
+});

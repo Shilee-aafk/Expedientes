@@ -19,9 +19,9 @@ export async function middleware(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims renueva la sesión si expiró y valida el token (localmente con claves asimétricas)
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims?.sub;
 
   const enLogin = request.nextUrl.pathname.startsWith("/login");
   if (!user && !enLogin) {
