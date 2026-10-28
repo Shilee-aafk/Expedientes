@@ -9,11 +9,6 @@ import { cambiarActivo, eliminarRequisito, guardarRequisito } from "./actions";
 
 const ORIGEN = { carnet: "Carnet prof.", titulo: "Título prof." } as const;
 
-const iconoLapiz = (
-  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4" />
-  </svg>
-);
 const iconoBasurero = (
   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4h6v3" />
@@ -66,19 +61,31 @@ function Fila({ r, abierto, alternar }: { r: Requisito; abierto: boolean; altern
 
   return (
     <li>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
-        <span className={`w-6 shrink-0 text-right text-xs tabular-nums text-muted transition-opacity ${activo ? "" : "opacity-50"}`}>{r.orden}</span>
-        <div className={`min-w-0 flex-1 transition-opacity ${activo ? "" : "opacity-50"}`}>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 font-medium">{r.nombre}</span>
-            {r.cantidad > 1 && <Etiqueta tono="marca">×{r.cantidad}</Etiqueta>}
-            {r.vence_en_dias && <Etiqueta tono="marca">Vigencia {r.vence_en_dias} días</Etiqueta>}
-            {r.por_dueno && <Etiqueta>Uno por dueño</Etiqueta>}
-            {r.opcional && <Etiqueta>Opcional</Etiqueta>}
-            {r.origen_perfil && <Etiqueta>Desde perfil: {ORIGEN[r.origen_perfil]}</Etiqueta>}
-          </div>
-          {r.descripcion && <p className="truncate text-xs text-muted">{r.descripcion}</p>}
-        </div>
+      <div className={`flex flex-wrap items-center gap-x-3 gap-y-2 py-1.5 pr-4 transition-colors [li:first-child_&]:rounded-t-2xl ${abierto ? "bg-brand-soft" : "hover:bg-glass-hover [li:last-child_&]:rounded-b-2xl"}`}>
+        {/* Toda la fila (número y nombre) abre o cierra el editor */}
+        <button
+          type="button"
+          onClick={alternar}
+          aria-expanded={abierto}
+          aria-label={`${abierto ? "Cerrar edición de" : "Editar"} ${r.nombre}`}
+          className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 py-1.5 pl-4 text-left"
+        >
+          <span className={`w-6 shrink-0 text-right text-xs tabular-nums text-muted transition-opacity ${activo ? "" : "opacity-50"}`}>{r.orden}</span>
+          <span className={`min-w-0 flex-1 transition-opacity ${activo ? "" : "opacity-50"}`}>
+            <span className="flex flex-wrap items-center gap-1.5">
+              <span className="mr-1 font-medium">{r.nombre}</span>
+              {r.cantidad > 1 && <Etiqueta tono="marca">×{r.cantidad}</Etiqueta>}
+              {r.vence_en_dias && <Etiqueta tono="marca">Vigencia {r.vence_en_dias} días</Etiqueta>}
+              {r.por_dueno && <Etiqueta>Uno por dueño</Etiqueta>}
+              {r.opcional && <Etiqueta>Opcional</Etiqueta>}
+              {r.origen_perfil && <Etiqueta>Desde perfil: {ORIGEN[r.origen_perfil]}</Etiqueta>}
+            </span>
+            {r.descripcion && <span className="block truncate text-xs text-muted">{r.descripcion}</span>}
+          </span>
+          <svg viewBox="0 0 24 24" className={`h-4 w-4 shrink-0 text-muted transition-transform duration-300 ${abierto ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
         <div className="flex items-center gap-2">
           <Interruptor
             label={activo ? "Activo" : "Inactivo"}
@@ -90,9 +97,6 @@ function Fila({ r, abierto, alternar }: { r: Requisito; abierto: boolean; altern
               })
             }
           />
-          <button type="button" className={`btn-secondary h-9 w-9 p-0 ${abierto ? "bg-brand-soft text-brand" : ""}`} onClick={alternar} aria-label={`Editar ${r.nombre}`} aria-expanded={abierto}>
-            {iconoLapiz}
-          </button>
           <Confirmar
             accion={() => eliminarRequisito(r.id)}
             titulo="¿Eliminar este requisito?"
