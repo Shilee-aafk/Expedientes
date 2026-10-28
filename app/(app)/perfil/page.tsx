@@ -8,12 +8,7 @@ export default async function PerfilPage() {
 
   return (
     <div className="mx-auto max-w-xl space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Mi perfil</h1>
-        <form action="/auth/salir" method="post">
-          <button className="btn-secondary">Cerrar sesión</button>
-        </form>
-      </div>
+      <h1 className="text-2xl font-semibold tracking-tight">Mi perfil</h1>
       <PerfilForm perfil={user} />
       <Equipo usuarios={listarUsuarios()} yoId={user.id} />
     </div>
