@@ -46,7 +46,7 @@ export function MenuInferior() {
   return (
     <nav
       aria-label="Menú principal"
-      className="glass no-print fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-20 w-[min(40rem,calc(100%-1.5rem))] -translate-x-1/2 rounded-full p-1.5 flotar-entrada"
+      className="glass no-print fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-50 w-[min(40rem,calc(100%-1.5rem))] -translate-x-1/2 rounded-full p-1.5 flotar-entrada"
     >
       <div className="relative grid grid-cols-3">
         <span

@@ -1,22 +1,18 @@
 "use client";
 
 import { useActionState } from "react";
-import { Select } from "@/components/Select";
 import { crearExpediente } from "../actions";
 
-export function NuevoForm({ perfiles, usuarioId }: { perfiles: { id: string; nombre: string }[]; usuarioId: string }) {
+export function NuevoForm() {
   const [error, accion, enviando] = useActionState(crearExpediente, null);
 
   return (
     <form action={accion} className="card cascada space-y-4 p-6">
       <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="label" htmlFor="codigo">Código *</label>
-          <input className="input" id="codigo" name="codigo" required placeholder="EXP-2026-001" />
-        </div>
-        <div>
+        <div className="sm:col-span-2">
           <label className="label" htmlFor="predio">Nombre del predio *</label>
-          <input className="input" id="predio" name="predio" required />
+          <input className="input" id="predio" name="predio" required autoFocus />
+          <p className="mt-1 text-xs text-muted">El código (por ejemplo EXP-001-2026) se asigna automáticamente.</p>
         </div>
         <div>
           <label className="label" htmlFor="rol_sii">Rol SII</label>
@@ -25,16 +21,6 @@ export function NuevoForm({ perfiles, usuarioId }: { perfiles: { id: string; nom
         <div>
           <label className="label" htmlFor="comuna">Comuna</label>
           <input className="input" id="comuna" name="comuna" />
-        </div>
-        <div className="sm:col-span-2">
-          <label className="label" htmlFor="profesional_id">Profesional responsable</label>
-          <Select
-            id="profesional_id"
-            name="profesional_id"
-            defaultValue={usuarioId}
-            opciones={[{ value: "", label: "Sin asignar" }, ...perfiles.map((p) => ({ value: p.id, label: p.nombre }))]}
-          />
-          <p className="mt-1 text-xs text-muted">Su carnet y título se adjuntan solos si están cargados en su perfil.</p>
         </div>
         <div className="sm:col-span-2">
           <label className="label" htmlFor="duenos">Dueño/s</label>

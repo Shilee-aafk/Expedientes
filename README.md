@@ -19,6 +19,7 @@ Stack: Next.js 15 + Tailwind 4 + Supabase (login, Postgres, Storage).
 En Supabase → **SQL Editor**, ejecuta en orden:
 1. `supabase/migrations/0001_init.sql`: tablas, seguridad, historial y bucket `documentos`.
 2. `supabase/seed.sql`: los 13 requisitos.
+3. `supabase/migrations/0003_codigo_automatico.sql`: código automático EXP-001-2026 (se reinicia cada año) y el creador como profesional del expediente.
 
 Las vigencias de 30 días del seed son un punto de partida; ajústalas en *Plantilla*.
 

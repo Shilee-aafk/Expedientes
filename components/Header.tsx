@@ -3,7 +3,7 @@ import { BotonTema } from "./BotonTema";
 
 export function Header({ nombre }: { nombre: string }) {
   return (
-    <header className="glass no-print sticky top-0 z-10 rounded-none border-x-0 border-t-0">
+    <header className="glass no-print sticky top-0 z-50 rounded-none border-x-0 border-t-0">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
         <Link href="/expedientes" className="group flex items-center gap-2 text-lg font-semibold tracking-tight text-text">
           <span className="flex h-8 w-8 items-center justify-center liquido rounded-xl text-on-brand transition-transform duration-500 ease-[var(--ease-spring)] group-hover:rotate-[-8deg] group-hover:scale-110">

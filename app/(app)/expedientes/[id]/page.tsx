@@ -10,7 +10,7 @@ import { EstadoAcciones } from "./EstadoAcciones";
 
 export default async function ExpedientePage({ params }: { params: Promise<{ id: string }> }) {
   const id = Number((await params).id);
-  const { expediente, items, duenos, historial, perfiles } = await cargarExpediente(id);
+  const { expediente, items, duenos, historial } = await cargarExpediente(id);
   const hoy = hoyChile();
   const r = resumen(items, duenos.length, hoy);
 
@@ -22,10 +22,10 @@ export default async function ExpedientePage({ params }: { params: Promise<{ id:
             <span className="transition-transform duration-300 group-hover:-translate-x-1">←</span> Expedientes
           </Link>
           <h1 className="mt-1 flex flex-wrap items-center gap-3 text-2xl font-semibold tracking-tight">
-            {expediente.codigo} <EstadoBadge estado={expediente.estado} />
+            {expediente.predio} <EstadoBadge estado={expediente.estado} />
           </h1>
-          <p className="text-muted">
-            {expediente.predio}
+          <p className="flex flex-wrap items-center gap-x-2 text-muted">
+            <span className="rounded-full bg-brand-soft px-2.5 py-0.5 font-mono text-xs font-semibold tracking-wide text-brand">{expediente.codigo}</span>
             {expediente.comuna && ` · ${expediente.comuna}`}
             {expediente.rol_sii && ` · Rol ${expediente.rol_sii}`}
           </p>
@@ -56,7 +56,7 @@ export default async function ExpedientePage({ params }: { params: Promise<{ id:
         <aside className="space-y-4 [&>*]:cascada [&>*:nth-child(2)]:[--i:2] [&>*:nth-child(3)]:[--i:4] [&>*:nth-child(4)]:[--i:6]">
           <EstadoAcciones id={id} estado={expediente.estado} listoParaEnviar={r.listoParaEnviar} />
           <Duenos expedienteId={id} duenos={duenos} />
-          <DatosForm expediente={expediente} perfiles={perfiles} />
+          <DatosForm expediente={expediente} />
           <div className="card p-4">
             <h2 className="mb-3 font-semibold">Historial</h2>
             <ul className="max-h-80 space-y-2 overflow-y-auto text-sm">

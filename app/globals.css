@@ -371,10 +371,11 @@ body::after {
 }
 
 /* Lista desplegable abierta: sus contenedores (cada tarjeta de vidrio es su propia capa)
-   suben por encima de las tarjetas vecinas para que el panel no quede tapado. */
-:is(.card, .cascada, .animar-entrada, form, section, aside, li):has([role="combobox"][aria-expanded="true"]) {
+   suben por encima de las tarjetas vecinas para que el panel no quede tapado.
+   No incluye el contenedor de la página: así nunca pasa por encima de la barra superior. */
+:is(.card, .cascada, form, section, aside, li):has([role="combobox"][aria-expanded="true"]) {
   position: relative;
-  z-index: 40;
+  z-index: 5;
 }
 
 /* Interruptor (checkbox con role="switch"): gris apagado, dorado líquido encendido */

@@ -27,17 +27,20 @@ export async function crearExpediente(_: string | null, f: FormData) {
   const { supabase } = await requireUser();
   const { data, error } = await supabase
     .from("expedientes")
+    // El código (EXP-001-2026) y el profesional (quien lo crea) los asigna la base de datos
     .insert({
-      codigo: texto(f, "codigo"),
       predio: texto(f, "predio"),
       rol_sii: texto(f, "rol_sii"),
       comuna: texto(f, "comuna"),
-      profesional_id: texto(f, "profesional_id"),
       notas: texto(f, "notas"),
     })
     .select("id")
     .single();
-  if (error) return error.code === "23505" ? "Ya existe un expediente con ese código." : error.message;
+  if (error) {
+    return error.code === "23502" && error.message.includes("codigo")
+      ? "Falta activar el código automático: ejecuta supabase/migrations/0003_codigo_automatico.sql en Supabase."
+      : error.message;
+  }
 
   const duenos = leerDuenos(texto(f, "duenos"));
   if (duenos.length) {
@@ -104,11 +107,9 @@ export async function guardarDatos(id: number, _: string | null, f: FormData) {
   const { error } = await supabase
     .from("expedientes")
     .update({
-      codigo: texto(f, "codigo"),
       predio: texto(f, "predio"),
       rol_sii: texto(f, "rol_sii"),
       comuna: texto(f, "comuna"),
-      profesional_id: texto(f, "profesional_id"),
       tercero_autorizado: texto(f, "tercero_autorizado"),
       fecha_envio: texto(f, "fecha_envio"),
       fecha_respuesta: texto(f, "fecha_respuesta"),
@@ -116,7 +117,7 @@ export async function guardarDatos(id: number, _: string | null, f: FormData) {
       notas: texto(f, "notas"),
     })
     .eq("id", id);
-  if (error) return error.code === "23505" ? "Ya existe un expediente con ese código." : error.message;
+  if (error) return error.message;
   revalidatePath(`/expedientes/${id}`);
   return "Guardado";
 }

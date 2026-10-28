@@ -1,11 +1,10 @@
 "use client";
 
 import { useActionState } from "react";
-import { Select } from "@/components/Select";
-import type { Expediente, Profile } from "@/lib/types";
+import type { Expediente } from "@/lib/types";
 import { guardarDatos } from "../actions";
 
-export function DatosForm({ expediente: e, perfiles }: { expediente: Expediente; perfiles: Profile[] }) {
+export function DatosForm({ expediente: e }: { expediente: Expediente }) {
   const [mensaje, accion, enviando] = useActionState(guardarDatos.bind(null, e.id), null);
   const campo = (name: keyof Expediente, label: string, type = "text") => (
     <div>
@@ -17,20 +16,10 @@ export function DatosForm({ expediente: e, perfiles }: { expediente: Expediente;
   return (
     <form action={accion} className="card space-y-3 p-4">
       <h2 className="font-semibold">Datos del expediente</h2>
-      {campo("codigo", "Código")}
       {campo("predio", "Predio")}
       <div className="grid grid-cols-2 gap-2">
         {campo("rol_sii", "Rol SII")}
         {campo("comuna", "Comuna")}
-      </div>
-      <div>
-        <label className="label" htmlFor="profesional_id">Profesional</label>
-        <Select
-          id="profesional_id"
-          name="profesional_id"
-          defaultValue={e.profesional_id ?? ""}
-          opciones={[{ value: "", label: "Sin asignar" }, ...perfiles.map((p) => ({ value: p.id, label: p.nombre }))]}
-        />
       </div>
 
       <h3 className="pt-2 text-sm font-semibold text-muted">Seguimiento del envío</h3>
