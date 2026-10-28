@@ -386,8 +386,8 @@ body::after {
 }
 
 /* Botón "activar": el texto mismo es el botón (checkbox oculto dentro del label).
-   Apagado: gris y hundido hacia adentro. Encendido: dorado líquido en relieve,
-   que se hunde al presionarlo. */
+   Apagado: gris y hundido hacia adentro. Encendido: dorado líquido liso;
+   ambos se encogen levemente al presionarlos. */
 .boton-activar {
   position: relative;
   display: inline-flex;
@@ -417,24 +417,21 @@ body::after {
   background: rgb(0 0 0 / 0.28);
   box-shadow: inset 0 2px 6px rgb(0 0 0 / 0.6), inset 0 1px 2px rgb(0 0 0 / 0.4), 0 1px 0 rgb(255 240 215 / 0.08);
 }
+/* Encendido: oro líquido como la píldora del menú (brillo suave, sin escalón) */
 .boton-activar:has(:checked) {
-  --relieve: color-mix(in srgb, var(--brand) 62%, black 38%);
   color: var(--on-brand);
-  border-color: color-mix(in srgb, var(--brand) 45%, white 40%);
+  border-color: color-mix(in srgb, var(--brand) 40%, white 45%);
   background:
     radial-gradient(120% 90% at 50% -20%, rgb(255 255 255 / 0.5), transparent 55%),
-    linear-gradient(180deg, color-mix(in srgb, var(--brand) 78%, white 22%), var(--brand) 55%, color-mix(in srgb, var(--brand) 82%, black 18%));
-  box-shadow: 0 3px 0 var(--relieve), 0 4px 12px var(--brand-glow), inset 0 1px 0 rgb(255 255 255 / 0.45);
-  transform: translateY(-1px);
+    linear-gradient(180deg, color-mix(in srgb, var(--brand) 78%, white 22%), var(--brand) 55%, color-mix(in srgb, var(--brand) 85%, black 15%));
+  box-shadow: 0 4px 14px var(--brand-glow), inset 0 1px 0 rgb(255 255 255 / 0.5), inset 0 -2px 5px rgb(0 0 0 / 0.12);
 }
 .boton-activar:has(:checked):hover {
   color: var(--on-brand);
-  box-shadow: 0 4px 0 var(--relieve), 0 6px 18px var(--brand-glow), inset 0 1px 0 rgb(255 255 255 / 0.5);
-  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--brand-glow), inset 0 1px 0 rgb(255 255 255 / 0.6), inset 0 -2px 5px rgb(0 0 0 / 0.12);
 }
-.boton-activar:has(:checked):active {
-  box-shadow: 0 0 0 var(--relieve), 0 1px 4px var(--brand-glow), inset 0 1px 0 rgb(255 255 255 / 0.45);
-  transform: translateY(2px);
+.boton-activar:active {
+  transform: scale(0.95);
 }
 .boton-activar:has(:focus-visible) {
   outline: 2px solid color-mix(in srgb, var(--brand) 60%, transparent);
