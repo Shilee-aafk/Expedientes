@@ -37,16 +37,16 @@ function indiceActivo(ruta: string) {
 }
 
 /**
- * Menú principal: burbuja larga flotante, fija abajo al centro.
- * La píldora activa se desliza con efecto elástico entre los tres botones.
+ * Menú principal en la barra superior: tres botones en una cápsula;
+ * la píldora activa se desliza con efecto elástico entre ellos.
  */
-export function MenuInferior() {
+export function MenuPrincipal({ className = "" }: { className?: string }) {
   const activo = indiceActivo(usePathname());
 
   return (
     <nav
       aria-label="Menú principal"
-      className="glass no-print fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-50 w-[min(40rem,calc(100%-1.5rem))] -translate-x-1/2 rounded-full p-1.5 flotar-entrada"
+      className={`rounded-full border border-border bg-bg p-1 shadow-[inset_0_1px_3px_rgb(0_0_0/0.12)] ${className}`}
     >
       <div className="relative grid grid-cols-3">
         <span
@@ -61,8 +61,8 @@ export function MenuInferior() {
               key={e.href}
               href={e.href}
               aria-current={on ? "page" : undefined}
-              className={`relative z-10 flex items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium transition-colors duration-300 active:scale-95 ${
-                on ? "text-on-brand" : "text-muted hover:text-text"
+              className={`relative z-10 flex items-center justify-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors duration-300 active:scale-95 ${
+                on ? "text-on-oro" : "text-muted hover:text-text"
               }`}
             >
               <span className={`transition-transform duration-500 ease-[var(--ease-spring)] ${on ? "scale-110" : ""}`}>{e.icono}</span>

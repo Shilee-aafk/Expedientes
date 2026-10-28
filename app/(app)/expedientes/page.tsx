@@ -68,13 +68,13 @@ export default async function ExpedientesPage({
       </div>
 
       <form className="flex flex-wrap gap-2">
-        <input name="q" defaultValue={q} placeholder="Buscar por código, predio, comuna, rol o dueño" className="input max-w-sm flex-1" />
+        <input name="q" defaultValue={q} placeholder="Buscar por código, predio, comuna, rol o dueño" className="input basis-full sm:max-w-sm sm:flex-1 sm:basis-auto" />
         <Select
           name="estado"
           defaultValue={estado ?? ""}
           enviarAlCambiar
           aria-label="Filtrar por estado"
-          className="w-52"
+          className="min-w-0 flex-1 sm:w-52 sm:flex-none"
           opciones={[{ value: "", label: "Todos los estados" }, ...ESTADOS.map((e) => ({ value: e, label: ETIQUETA_ESTADO[e] }))]}
         />
         <button className="btn-secondary">Filtrar</button>

@@ -42,9 +42,9 @@ export function ListaPlantilla({ requisitos }: { requisitos: Requisito[] }) {
         </div>
       </div>
 
-      <ul className="card divide-y divide-border">
-        {requisitos.map((r, i) => (
-          <Fila key={r.id} r={r} indice={i} abierto={editando === r.id} alternar={() => setEditando(editando === r.id ? null : r.id)} />
+      <ul className="card cascada divide-y divide-border">
+        {requisitos.map((r) => (
+          <Fila key={r.id} r={r} abierto={editando === r.id} alternar={() => setEditando(editando === r.id ? null : r.id)} />
         ))}
         {requisitos.length === 0 && <li className="p-8 text-center text-muted">No hay requisitos. Agrega el primero.</li>}
       </ul>
@@ -60,12 +60,12 @@ function Etiqueta({ children, tono = "neutro" }: { children: React.ReactNode; to
   );
 }
 
-function Fila({ r, indice, abierto, alternar }: { r: Requisito; indice: number; abierto: boolean; alternar: () => void }) {
+function Fila({ r, abierto, alternar }: { r: Requisito; abierto: boolean; alternar: () => void }) {
   const [activo, setActivo] = useOptimistic(r.activo);
   const [, iniciar] = useTransition();
 
   return (
-    <li className="cascada" style={{ "--i": indice } as React.CSSProperties}>
+    <li>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
         <span className={`w-6 shrink-0 text-right text-xs tabular-nums text-muted transition-opacity ${activo ? "" : "opacity-50"}`}>{r.orden}</span>
         <div className={`min-w-0 flex-1 transition-opacity ${activo ? "" : "opacity-50"}`}>

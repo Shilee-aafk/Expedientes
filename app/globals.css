@@ -40,6 +40,16 @@
   --input-bg-focus: rgb(255 253 249 / 0.9);
   --glass-menu: rgb(253 250 244);
   --glass-blur: 20px;
+
+  /* Oro líquido (botones principales, activar, menú) */
+  --on-oro: var(--on-brand);
+  --oro-reflejo: rgb(255 255 255 / 0.45);
+  --oro-fondo:
+    radial-gradient(120% 90% at 50% -20%, rgb(255 255 255 / 0.55), transparent 55%),
+    linear-gradient(180deg, color-mix(in srgb, var(--brand) 78%, white 22%), var(--brand) 55%, color-mix(in srgb, var(--brand) 82%, black 18%));
+  --oro-borde: color-mix(in srgb, var(--brand) 45%, white 40%);
+  --oro-sombra: 0 6px 22px var(--brand-glow), inset 0 1px 0 rgb(255 255 255 / 0.5), inset 0 -2px 6px rgb(0 0 0 / 0.15);
+  --oro-sombra-hover: 0 10px 32px var(--brand-glow), inset 0 1px 0 rgb(255 255 255 / 0.6), inset 0 -2px 6px rgb(0 0 0 / 0.15);
   color-scheme: light;
 }
 
@@ -77,6 +87,16 @@
   --input-bg: rgb(255 245 228 / 0.05);
   --input-bg-focus: rgb(255 245 228 / 0.09);
   --glass-menu: rgb(28 23 17);
+
+  /* En oscuro: bronce profundo, brillo tenue y sombra oscura en vez de resplandor */
+  --on-oro: #fbf1e0;
+  --oro-reflejo: rgb(255 238 210 / 0.16);
+  --oro-fondo:
+    radial-gradient(120% 90% at 50% -20%, rgb(255 236 205 / 0.16), transparent 55%),
+    linear-gradient(180deg, #a3804b, #86683a 55%, #6b522d);
+  --oro-borde: rgb(214 181 130 / 0.35);
+  --oro-sombra: 0 4px 14px rgb(0 0 0 / 0.45), inset 0 1px 0 rgb(255 232 195 / 0.22), inset 0 -2px 5px rgb(0 0 0 / 0.2);
+  --oro-sombra-hover: 0 6px 20px rgb(0 0 0 / 0.55), inset 0 1px 0 rgb(255 232 195 / 0.3), inset 0 -2px 5px rgb(0 0 0 / 0.2);
   color-scheme: dark;
 }
 
@@ -85,6 +105,7 @@
   --color-brand-hover: var(--brand-hover);
   --color-brand-soft: var(--brand-soft);
   --color-on-brand: var(--on-brand);
+  --color-on-oro: var(--on-oro);
   --color-accent: var(--accent);
   --color-text: var(--text);
   --color-muted: var(--muted);
@@ -126,25 +147,17 @@ body::before {
     radial-gradient(30rem 30rem at 88% 16%, var(--blob-2), transparent 65%),
     radial-gradient(38rem 38rem at 72% 88%, var(--blob-3), transparent 65%),
     radial-gradient(28rem 28rem at 22% 80%, var(--blob-4), transparent 65%);
-  animation: deriva 40s ease-in-out infinite alternate;
+  /* Quieto a propósito: si se moviera, cada tarjeta de vidrio recalcularía su desenfoque en cada fotograma */
+  transform: translateZ(0);
 }
 body::after {
   inset: -4%;
   background: var(--contour);
   -webkit-mask: url(/curvas.svg) center / cover no-repeat;
   mask: url(/curvas.svg) center / cover no-repeat;
-  animation: deriva-curvas 90s ease-in-out infinite alternate;
+  transform: translateZ(0);
 }
 
-@keyframes deriva {
-  0% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(3%, -2%, 0) scale(1.06); }
-  100% { transform: translate3d(-2%, 3%, 0) scale(1.02); }
-}
-@keyframes deriva-curvas {
-  from { transform: translate3d(0, 0, 0) scale(1); }
-  to { transform: translate3d(-1.5%, 1%, 0) scale(1.04); }
-}
 
 /* ─── Vidrio ───────────────────────────────────────────────────────── */
 @utility glass {
@@ -162,10 +175,8 @@ body::after {
 
 /* Superficie dorada "líquida": brillo superior, cuerpo dorado y fondo más profundo */
 @utility liquido {
-  background:
-    radial-gradient(120% 90% at 50% -20%, rgb(255 255 255 / 0.55), transparent 55%),
-    linear-gradient(180deg, color-mix(in srgb, var(--brand) 78%, white 22%), var(--brand) 55%, color-mix(in srgb, var(--brand) 82%, black 18%));
-  box-shadow: 0 6px 22px var(--brand-glow), inset 0 1px 0 rgb(255 255 255 / 0.5), inset 0 -2px 6px rgb(0 0 0 / 0.15);
+  background: var(--oro-fondo);
+  box-shadow: var(--oro-sombra);
 }
 
 @utility card {
@@ -186,24 +197,22 @@ body::after {
 
 @utility btn-primary {
   @apply btn;
-  color: var(--on-brand);
-  background:
-    radial-gradient(120% 90% at 50% -20%, rgb(255 255 255 / 0.55), transparent 55%),
-    linear-gradient(180deg, color-mix(in srgb, var(--brand) 78%, white 22%), var(--brand) 55%, color-mix(in srgb, var(--brand) 82%, black 18%));
-  border-color: color-mix(in srgb, var(--brand) 45%, white 40%);
-  box-shadow: 0 6px 22px var(--brand-glow), inset 0 1px 0 rgb(255 255 255 / 0.5), inset 0 -2px 6px rgb(0 0 0 / 0.15);
+  color: var(--on-oro);
+  background: var(--oro-fondo);
+  border-color: var(--oro-borde);
+  box-shadow: var(--oro-sombra);
   /* Reflejo de luz que cruza el botón al pasar el cursor */
   &::after {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.45) 50%, transparent 65%);
+    background: linear-gradient(105deg, transparent 35%, var(--oro-reflejo) 50%, transparent 65%);
     transform: translateX(-120%);
     transition: transform 0.7s var(--ease-out-expo);
     pointer-events: none;
   }
   &:hover {
-    box-shadow: 0 10px 32px var(--brand-glow), inset 0 1px 0 rgb(255 255 255 / 0.6), inset 0 -2px 6px rgb(0 0 0 / 0.15);
+    box-shadow: var(--oro-sombra-hover);
   }
   &:hover::after {
     transform: translateX(120%);
@@ -245,12 +254,12 @@ body::after {
 
 /* ─── Animaciones ──────────────────────────────────────────────────── */
 @keyframes entrar {
-  from { opacity: 0; transform: translateY(10px) scale(0.99); filter: blur(4px); }
-  to { opacity: 1; transform: none; filter: none; }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
 }
 @keyframes flotar-entrada {
-  from { opacity: 0; transform: translateY(24px) scale(0.96); filter: blur(10px); }
-  to { opacity: 1; transform: none; filter: none; }
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to { opacity: 1; transform: none; }
 }
 @keyframes pop {
   0% { transform: scale(1); }
@@ -279,14 +288,14 @@ body::after {
 
 /* Entrada de pantalla y listas en cascada (usar style={{"--i": n}}) */
 @utility animar-entrada {
-  animation: entrar 0.5s var(--ease-out-expo) both;
+  animation: entrar 0.45s var(--ease-out-expo) backwards;
 }
 @utility cascada {
-  animation: entrar 0.55s var(--ease-out-expo) both;
-  animation-delay: calc(min(var(--i, 0), 14) * 40ms);
+  animation: entrar 0.45s var(--ease-out-expo) backwards;
+  animation-delay: calc(min(var(--i, 0), 8) * 35ms);
 }
 @utility flotar-entrada {
-  animation: flotar-entrada 0.8s var(--ease-out-expo) both;
+  animation: flotar-entrada 0.7s var(--ease-out-expo) backwards;
 }
 @utility pop {
   animation: pop 0.35s var(--ease-spring);
@@ -305,7 +314,7 @@ body::after {
 }
 @utility barra-llenar {
   transform-origin: left;
-  animation: llenar 0.9s var(--ease-out-expo) both;
+  animation: llenar 0.9s var(--ease-out-expo) backwards;
 }
 
 /* Panel desplegable con altura animada */
@@ -419,16 +428,14 @@ body::after {
 }
 /* Encendido: oro líquido como la píldora del menú (brillo suave, sin escalón) */
 .boton-activar:has(:checked) {
-  color: var(--on-brand);
-  border-color: color-mix(in srgb, var(--brand) 40%, white 45%);
-  background:
-    radial-gradient(120% 90% at 50% -20%, rgb(255 255 255 / 0.5), transparent 55%),
-    linear-gradient(180deg, color-mix(in srgb, var(--brand) 78%, white 22%), var(--brand) 55%, color-mix(in srgb, var(--brand) 85%, black 15%));
-  box-shadow: 0 4px 14px var(--brand-glow), inset 0 1px 0 rgb(255 255 255 / 0.5), inset 0 -2px 5px rgb(0 0 0 / 0.12);
+  color: var(--on-oro);
+  border-color: var(--oro-borde);
+  background: var(--oro-fondo);
+  box-shadow: var(--oro-sombra);
 }
 .boton-activar:has(:checked):hover {
-  color: var(--on-brand);
-  box-shadow: 0 6px 20px var(--brand-glow), inset 0 1px 0 rgb(255 255 255 / 0.6), inset 0 -2px 5px rgb(0 0 0 / 0.12);
+  color: var(--on-oro);
+  box-shadow: var(--oro-sombra-hover);
 }
 .boton-activar:active {
   transform: scale(0.95);
