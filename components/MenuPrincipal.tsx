@@ -2,38 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const trazo = { fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" } as const;
-
-const iconos = {
-  expedientes: (
-    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" {...trazo}>
-      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-    </svg>
-  ),
-  nuevo: (
-    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" {...trazo}>
-      <path d="M12 5v14M5 12h14" />
-    </svg>
-  ),
-  plantilla: (
-    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" {...trazo}>
-      <path d="M9 6h11M9 12h11M9 18h11M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" />
-    </svg>
-  ),
-  perfil: (
-    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" {...trazo}>
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6" />
-    </svg>
-  ),
-};
+import { IconoExpedientes, IconoNuevo, IconoPerfil, IconoPlantilla } from "./Iconos";
 
 const enlaces = [
-  { href: "/expedientes", texto: "Expedientes", icono: iconos.expedientes },
-  { href: "/expedientes/nuevo", texto: "Nuevo", icono: iconos.nuevo },
-  { href: "/configuracion/plantilla", texto: "Plantilla", icono: iconos.plantilla },
-  { href: "/perfil", texto: "Perfil", icono: iconos.perfil },
+  { href: "/expedientes", texto: "Expedientes", Icono: IconoExpedientes },
+  { href: "/expedientes/nuevo", texto: "Nuevo", Icono: IconoNuevo },
+  { href: "/configuracion/plantilla", texto: "Plantilla", Icono: IconoPlantilla },
+  { href: "/perfil", texto: "Perfil", Icono: IconoPerfil },
 ];
 
 function indiceActivo(ruta: string) {
@@ -73,7 +48,7 @@ export function MenuPrincipal({ className = "" }: { className?: string }) {
                 on ? "text-on-oro" : "text-muted hover:text-text"
               }`}
             >
-              <span className={`transition-transform duration-500 ease-[var(--ease-spring)] ${on ? "scale-110" : ""}`}>{e.icono}</span>
+              <span className={`transition-transform duration-500 ease-[var(--ease-spring)] ${on ? "scale-110" : ""}`}><e.Icono className="h-5 w-5" /></span>
               <span className="sr-only sm:not-sr-only">{e.texto}</span>
             </Link>
           );

@@ -3,26 +3,12 @@
 import { useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import { CLAVE_TEMA, resolverTema, type PreferenciaTema } from "@/lib/tema";
+import { IconoAuto, IconoLuna, IconoSol } from "./Iconos";
 
 const ORDEN: PreferenciaTema[] = ["oscuro", "claro", "auto"];
 const ETIQUETA: Record<PreferenciaTema, string> = { oscuro: "Oscuro", claro: "Claro", auto: "Automático" };
 
-const trazo = { fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" } as const;
-const ICONO: Record<PreferenciaTema, React.ReactNode> = {
-  oscuro: <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" />,
-  claro: (
-    <>
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-    </>
-  ),
-  auto: (
-    <>
-      <circle cx="12" cy="12" r="8" />
-      <path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" />
-    </>
-  ),
-};
+const ICONO: Record<PreferenciaTema, typeof IconoLuna> = { oscuro: IconoLuna, claro: IconoSol, auto: IconoAuto };
 
 function leerPreferencia(): PreferenciaTema {
   try {
@@ -72,6 +58,8 @@ export function BotonTema() {
     }
   }
 
+  const Icono = ICONO[pref];
+
   return (
     <button
       type="button"
@@ -80,9 +68,9 @@ export function BotonTema() {
       title={`Tema: ${ETIQUETA[pref]} (clic para cambiar)`}
       aria-label={`Tema: ${ETIQUETA[pref]}`}
     >
-      <svg key={pref} viewBox="0 0 24 24" className="pop h-5 w-5" {...trazo}>
-        {ICONO[pref]}
-      </svg>
+      <span key={pref} className="pop">
+        <Icono className="h-5 w-5" />
+      </span>
     </button>
   );
 }

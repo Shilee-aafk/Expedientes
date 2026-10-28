@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BotonTema } from "./BotonTema";
+import { IconoSalir } from "./Iconos";
 import { MenuPrincipal } from "./MenuPrincipal";
 
 /** Barra flotante superior: burbuja con logo, menú y tema; y una burbuja aparte para salir. */
@@ -30,12 +31,7 @@ export function Header() {
           title="Cerrar sesión"
           aria-label="Cerrar sesión"
         >
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            {/* Puerta con manilla y flecha de salida */}
-            <path d="M3 21h12M5 21V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v17" />
-            <circle cx="10.5" cy="12" r="0.9" fill="currentColor" stroke="none" />
-            <path d="M16 12h6M19.5 9.5 22 12l-2.5 2.5" />
-          </svg>
+          <IconoSalir className="h-5 w-5" />
         </button>
       </form>
     </header>
