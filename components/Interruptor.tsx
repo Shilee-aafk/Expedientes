@@ -11,10 +11,10 @@ type Props = {
   disabled?: boolean;
 };
 
-/** Interruptor tipo "activar": gris apagado, dorado encendido. */
+/** Botón "activar": se presiona sobre el texto; gris apagado, dorado encendido. */
 export function Interruptor({ name, label, checked, defaultChecked, onChange, enviarAlCambiar, disabled }: Props) {
   return (
-    <label className="flex cursor-pointer items-center gap-2 select-none">
+    <label className="boton-activar">
       <input
         type="checkbox"
         role="switch"
@@ -22,7 +22,7 @@ export function Interruptor({ name, label, checked, defaultChecked, onChange, en
         checked={checked}
         defaultChecked={defaultChecked}
         disabled={disabled}
-        className="interruptor"
+        className="sr-only"
         onChange={(e) => {
           onChange?.(e.target.checked);
           if (enviarAlCambiar) e.target.form?.requestSubmit();

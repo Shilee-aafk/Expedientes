@@ -385,53 +385,58 @@ body::after {
   z-index: 5;
 }
 
-/* Interruptor (checkbox con role="switch"): gris apagado, dorado líquido encendido */
-.interruptor {
-  appearance: none;
+/* Botón "activar": el texto mismo es el botón. Relieve 3D que se hunde al presionar;
+   gris apagado, dorado líquido encendido. (Checkbox oculto dentro del label.) */
+.boton-activar {
+  --relieve: color-mix(in srgb, var(--muted) 45%, black 15%);
   position: relative;
-  flex-shrink: 0;
-  width: 2.75rem;
-  height: 1.6rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
-  border-radius: 9999px;
-  background: color-mix(in srgb, var(--muted) 30%, transparent);
-  border: 1px solid var(--glass-border);
-  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.18);
-  transition: background 0.35s ease, box-shadow 0.35s ease;
+  user-select: none;
+  white-space: nowrap;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--muted) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--muted) 25%, transparent);
+  box-shadow: 0 3px 0 var(--relieve), 0 4px 10px rgb(0 0 0 / 0.12), inset 0 1px 0 var(--glass-highlight);
+  transform: translateY(0);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
-.interruptor::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 0.15rem;
-  width: 1.2rem;
-  height: 1.2rem;
-  border-radius: 9999px;
-  background: linear-gradient(180deg, #fff, #ece7df);
-  box-shadow: 0 2px 6px rgb(0 0 0 / 0.25), inset 0 -1px 1px rgb(0 0 0 / 0.08);
-  transform: translateY(-50%);
-  transition: transform 0.45s var(--ease-spring), width 0.2s ease;
+.boton-activar:hover {
+  color: var(--text);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 var(--relieve), 0 6px 14px rgb(0 0 0 / 0.16), inset 0 1px 0 var(--glass-highlight);
 }
-.interruptor:active::before {
-  width: 1.45rem;
+.boton-activar:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--relieve), 0 1px 3px rgb(0 0 0 / 0.15), inset 0 1px 0 var(--glass-highlight);
 }
-.interruptor:checked {
+.boton-activar:has(:checked) {
+  --relieve: color-mix(in srgb, var(--brand) 62%, black 38%);
+  color: var(--on-brand);
+  border-color: color-mix(in srgb, var(--brand) 45%, white 40%);
   background:
     radial-gradient(120% 90% at 50% -20%, rgb(255 255 255 / 0.5), transparent 55%),
     linear-gradient(180deg, color-mix(in srgb, var(--brand) 78%, white 22%), var(--brand) 55%, color-mix(in srgb, var(--brand) 82%, black 18%));
-  box-shadow: 0 2px 12px var(--brand-glow), inset 0 1px 0 rgb(255 255 255 / 0.4);
 }
-.interruptor:checked::before {
-  transform: translate(1.15rem, -50%);
+.boton-activar:has(:checked):hover {
+  color: var(--on-brand);
+  box-shadow: 0 4px 0 var(--relieve), 0 6px 18px var(--brand-glow), inset 0 1px 0 rgb(255 255 255 / 0.5);
 }
-.interruptor:checked:active::before {
-  transform: translate(0.9rem, -50%);
-}
-.interruptor:focus-visible {
+.boton-activar:has(:focus-visible) {
   outline: 2px solid color-mix(in srgb, var(--brand) 60%, transparent);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
-.interruptor:disabled { cursor: not-allowed; opacity: 0.5; }
+.boton-activar:has(:disabled) {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 
 /* Diálogo de confirmación */
 dialog.dialogo {

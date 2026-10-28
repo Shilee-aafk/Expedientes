@@ -66,9 +66,9 @@ function Fila({ r, indice, abierto, alternar }: { r: Requisito; indice: number; 
 
   return (
     <li className="cascada" style={{ "--i": indice } as React.CSSProperties}>
-      <div className={`flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 transition-opacity ${activo ? "" : "opacity-50"}`}>
-        <span className="w-6 shrink-0 text-right text-xs tabular-nums text-muted">{r.orden}</span>
-        <div className="min-w-0 flex-1">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
+        <span className={`w-6 shrink-0 text-right text-xs tabular-nums text-muted transition-opacity ${activo ? "" : "opacity-50"}`}>{r.orden}</span>
+        <div className={`min-w-0 flex-1 transition-opacity ${activo ? "" : "opacity-50"}`}>
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="mr-1 font-medium">{r.nombre}</span>
             {r.cantidad > 1 && <Etiqueta tono="marca">×{r.cantidad}</Etiqueta>}
@@ -81,7 +81,7 @@ function Fila({ r, indice, abierto, alternar }: { r: Requisito; indice: number; 
         </div>
         <div className="flex items-center gap-2">
           <Interruptor
-            label={<span className="text-xs text-muted">{activo ? "Activo" : "Inactivo"}</span>}
+            label={activo ? "Activo" : "Inactivo"}
             checked={activo}
             onChange={(v) =>
               iniciar(async () => {
