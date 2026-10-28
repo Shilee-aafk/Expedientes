@@ -473,18 +473,24 @@ dialog.dialogo::backdrop {
   from { opacity: 0; }
 }
 
-/* Cambio de tema: el nuevo tema se expande en círculo desde el botón */
+/* Durante el cambio de tema no se anima ningún color (lo anima el revelado) */
+html[data-cambiando-tema] *,
+html[data-cambiando-tema] *::before,
+html[data-cambiando-tema] *::after {
+  transition: none !important;
+}
+
+/* Cambio de tema: fundido corto (el círculo con clip-path trababa: no lo acelera la GPU) */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
 }
 ::view-transition-new(root) {
-  animation: revelar 0.6s var(--ease-out-expo);
+  animation: fundir 0.3s ease-out;
 }
-@keyframes revelar {
-  from { clip-path: circle(0 at var(--tema-x, 100%) var(--tema-y, 0)); }
-  to { clip-path: circle(150vmax at var(--tema-x, 100%) var(--tema-y, 0)); }
+@keyframes fundir {
+  from { opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

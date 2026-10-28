@@ -49,7 +49,7 @@ export function BotonTema() {
     return () => mq.removeEventListener("change", aplicar);
   }, [pref]);
 
-  function cambiar(e: React.MouseEvent) {
+  function cambiar() {
     const siguiente = ORDEN[(ORDEN.indexOf(pref) + 1) % ORDEN.length];
     try {
       localStorage.setItem(CLAVE_TEMA, siguiente);
@@ -60,15 +60,21 @@ export function BotonTema() {
     };
 
     const raiz = document.documentElement;
-    raiz.style.setProperty("--tema-x", `${e.clientX}px`);
-    raiz.style.setProperty("--tema-y", `${e.clientY}px`);
-    if (!document.startViewTransition || matchMedia("(prefers-reduced-motion: reduce)").matches) aplicar();
-    else document.startViewTransition(aplicar);
+    // Sin transiciones de color mientras dura el cambio: cada tarjeta se pinta una sola vez
+    // con su color nuevo y la animación la hace solo el círculo de revelado.
+    raiz.dataset.cambiandoTema = "";
+    const terminar = () => delete raiz.dataset.cambiandoTema;
+    if (!document.startViewTransition || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      aplicar();
+      requestAnimationFrame(() => requestAnimationFrame(terminar));
+    } else {
+      document.startViewTransition(aplicar).finished.finally(terminar);
+    }
   }
 
   return (
     <button type="button" onClick={cambiar} className="btn-secondary h-8 gap-1.5 px-3 text-xs" title="Cambiar tema" aria-label={`Tema: ${ETIQUETA[pref]}`}>
-      <svg viewBox="0 0 24 24" className="h-4 w-4" {...trazo}>
+      <svg key={pref} viewBox="0 0 24 24" className="pop h-4 w-4" {...trazo}>
         {ICONO[pref]}
       </svg>
       <span className="hidden sm:inline">{ETIQUETA[pref]}</span>
