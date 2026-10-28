@@ -1,6 +1,7 @@
 "use client";
 
 import { useOptimistic, useState, useTransition } from "react";
+import { Confirmar } from "@/components/Confirmar";
 import { Select } from "@/components/Select";
 import { ESTADOS, ETIQUETA_ESTADO, type EstadoExpediente } from "@/lib/types";
 import { cambiarEstado, eliminarExpediente } from "../actions";
@@ -35,13 +36,19 @@ export function EstadoAcciones({ id, estado, listoParaEnviar }: { id: number; es
         opciones={ESTADOS.map((e) => ({ value: e, label: ETIQUETA_ESTADO[e] }))}
       />
       {mensaje && <p key={mensaje} className="sacudir rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger">{mensaje}</p>}
-      <button
-        className="text-xs text-danger hover:underline"
-        disabled={pendiente}
-        onClick={() => confirm("¿Eliminar este expediente y sus archivos? No se puede deshacer.") && iniciar(() => eliminarExpediente(id))}
-      >
-        Eliminar expediente
-      </button>
+      <div className="border-t border-border pt-3">
+        <Confirmar
+          accion={() => eliminarExpediente(id)}
+          titulo="¿Eliminar este expediente?"
+          mensaje="Se borran su checklist, dueños, historial y archivos adjuntos. No se puede deshacer."
+          className="btn-danger w-full"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4h6v3" />
+          </svg>
+          Eliminar expediente
+        </Confirmar>
+      </div>
     </div>
   );
 }

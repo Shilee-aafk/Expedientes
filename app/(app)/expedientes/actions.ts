@@ -62,6 +62,17 @@ export async function actualizarItem(id: number, cambio: CambioItem) {
   revalidatePath(`/expedientes/${data.expediente_id}`);
 }
 
+/** Quita un requisito solo de este expediente (la plantilla no cambia). */
+export async function eliminarItem(id: number) {
+  const { supabase } = await requireUser();
+  const { data, error } = await supabase.from("expediente_items").delete().eq("id", id).select("expediente_id, archivo_path").single();
+  if (error) throw new Error(error.message);
+  if (data.archivo_path?.startsWith(`expedientes/${data.expediente_id}/`)) {
+    await supabase.storage.from("documentos").remove([data.archivo_path]);
+  }
+  revalidatePath(`/expedientes/${data.expediente_id}`);
+}
+
 export async function cambiarEstado(id: number, estado: EstadoExpediente) {
   if (!ESTADOS.includes(estado)) throw new Error("Estado inválido");
   const { supabase } = await requireUser();

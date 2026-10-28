@@ -27,3 +27,11 @@ export async function guardarRequisito(id: number | null, f: FormData) {
   else await supabase.from("requisitos_plantilla").insert(datos);
   revalidatePath("/configuracion/plantilla");
 }
+
+/** Los expedientes ya creados conservan su copia del requisito. */
+export async function eliminarRequisito(id: number) {
+  const { supabase } = await requireUser();
+  const { error } = await supabase.from("requisitos_plantilla").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/configuracion/plantilla");
+}

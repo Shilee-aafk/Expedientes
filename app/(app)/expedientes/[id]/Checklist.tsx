@@ -1,11 +1,13 @@
 "use client";
 
 import { useOptimistic, useState, useTransition } from "react";
+import { Confirmar } from "@/components/Confirmar";
+import { Interruptor } from "@/components/Interruptor";
 import { cantidadRequerida, fechaVencimiento, itemCumplido, vigencia, type Vigencia } from "@/lib/checklist";
 import { formatoFecha } from "@/lib/formato";
 import { createClient } from "@/lib/supabase/client";
 import type { Item } from "@/lib/types";
-import { actualizarItem, type CambioItem } from "../actions";
+import { actualizarItem, eliminarItem, type CambioItem } from "../actions";
 
 const TEXTO_VIGENCIA: Record<Vigencia, [string, string]> = {
   vigente: ["Vigente", "text-ok"],
@@ -162,17 +164,26 @@ function ChecklistItem({ item: real, indice, numDuenos, hoy, expedienteId }: Pro
               <label className="label">Comentario</label>
               <textarea className="input" rows={2} defaultValue={item.comentario ?? ""} onBlur={(e) => e.target.value !== (item.comentario ?? "") && guardar({ comentario: e.target.value || null })} />
             </div>
-            {item.opcional && (
-              <label className="flex items-center gap-2 text-sm">
-                <span className="check-wrap">
-                  <input type="checkbox" className="check" checked={noAplica} onChange={(e) => guardar({ estado: e.target.checked ? "no_aplica" : "pendiente", cantidad_entregada: 0 })} />
-                  <svg viewBox="0 0 24 24" aria-hidden>
-                    <path d="M5 12.5l4.5 4.5L19 7.5" />
-                  </svg>
-                </span>
-                No aplica para este expediente
-              </label>
-            )}
+            <div className="flex flex-wrap items-center justify-between gap-3 text-sm sm:col-span-2">
+              {item.opcional ? (
+                <Interruptor
+                  label="No aplica para este expediente"
+                  checked={noAplica}
+                  onChange={(activo) => guardar({ estado: activo ? "no_aplica" : "pendiente", cantidad_entregada: 0 })}
+                />
+              ) : (
+                <span />
+              )}
+              <Confirmar
+                accion={() => eliminarItem(item.id)}
+                titulo="¿Quitar este requisito?"
+                mensaje={`«${item.nombre}» se quita solo de este expediente, junto con su archivo adjunto. La plantilla no cambia.`}
+                textoConfirmar="Quitar"
+                className="btn-danger px-3 py-1 text-xs"
+              >
+                Quitar de este expediente
+              </Confirmar>
+            </div>
           </div>
         </div>
       </div>
