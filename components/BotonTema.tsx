@@ -73,11 +73,16 @@ export function BotonTema() {
   }
 
   return (
-    <button type="button" onClick={cambiar} className="btn-secondary h-8 gap-1.5 px-3 text-xs" title="Cambiar tema" aria-label={`Tema: ${ETIQUETA[pref]}`}>
-      <svg key={pref} viewBox="0 0 24 24" className="pop h-4 w-4" {...trazo}>
+    <button
+      type="button"
+      onClick={cambiar}
+      className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:bg-glass-hover hover:text-text active:scale-95"
+      title={`Tema: ${ETIQUETA[pref]} (clic para cambiar)`}
+      aria-label={`Tema: ${ETIQUETA[pref]}`}
+    >
+      <svg key={pref} viewBox="0 0 24 24" className="pop h-5 w-5" {...trazo}>
         {ICONO[pref]}
       </svg>
-      <span className="hidden sm:inline">{ETIQUETA[pref]}</span>
     </button>
   );
 }
