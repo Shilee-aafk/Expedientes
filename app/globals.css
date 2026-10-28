@@ -1,34 +1,90 @@
 @import "tailwindcss";
 
-/* Colores de marca: provisorios hasta tomar los de spproyectos.cl.
-   Cambiar aquí actualiza toda la app. */
-:root {
-  --brand: #1f5fa8;
-  --brand-hover: #174a85;
-  --brand-soft: rgb(31 95 168 / 0.12);
-  --accent: #e0892b;
-  --text: #142033;
-  --muted: #4f5d70;
-  --border: rgb(255 255 255 / 0.55);
-  --line: rgb(20 32 51 / 0.1);
-  --ok: #17784a;
-  --ok-soft: rgb(23 120 74 / 0.12);
-  --warn: #9a5800;
-  --warn-soft: rgb(224 137 43 / 0.16);
-  --danger: #b42318;
-  --danger-soft: rgb(180 35 24 / 0.1);
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-  /* Vidrio */
-  --glass: rgb(255 255 255 / 0.45);
-  --glass-strong: rgb(255 255 255 / 0.68);
+/* ─── Temas ────────────────────────────────────────────────────────────
+   Paleta de Sánchez Paz Proyectos y Servicios: dorado champaña sobre
+   crema (claro) o sobre carbón cálido (oscuro, por defecto).
+   Todos los colores salen de estas variables. */
+:root {
+  --brand: #a07a45;
+  --brand-hover: #87653a;
+  --brand-soft: rgb(160 122 69 / 0.13);
+  --brand-glow: rgb(160 122 69 / 0.35);
+  --on-brand: #ffffff;
+  --accent: #b9895a;
+  --text: #2a2218;
+  --muted: #6f6353;
+  --line: rgb(70 50 25 / 0.12);
+  --ok: #3f7d4f;
+  --ok-soft: rgb(63 125 79 / 0.13);
+  --warn: #9a6512;
+  --warn-soft: rgb(214 160 70 / 0.18);
+  --danger: #b03a2e;
+  --danger-soft: rgb(176 58 46 / 0.1);
+
+  --bg: #f6f1e8;
+  --blob-1: rgb(201 169 120 / 0.45);
+  --blob-2: rgb(232 208 165 / 0.55);
+  --blob-3: rgb(170 130 80 / 0.28);
+  --blob-4: rgb(165 170 140 / 0.28);
+  --contour: rgb(140 105 60 / 0.13);
+
+  --glass: rgb(255 252 246 / 0.48);
+  --glass-strong: rgb(255 252 246 / 0.72);
+  --glass-hover: rgb(255 252 246 / 0.66);
+  --glass-border: rgb(255 255 255 / 0.65);
+  --glass-highlight: rgb(255 255 255 / 0.8);
+  --glass-shadow-color: rgb(90 65 30 / 0.12);
+  --input-bg: rgb(255 253 249 / 0.6);
+  --input-bg-focus: rgb(255 253 249 / 0.9);
+  --glass-menu: rgb(253 250 244);
   --glass-blur: 20px;
-  --glass-shadow: 0 8px 32px rgb(20 40 80 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.75);
+  color-scheme: light;
+}
+
+/* Oscuro elegante: vidrio ahumado sobre carbón cálido, con brillos dorados */
+[data-theme="dark"] {
+  --brand: #d6b582;
+  --brand-hover: #e8cfa3;
+  --brand-soft: rgb(214 181 130 / 0.14);
+  --brand-glow: rgb(214 181 130 / 0.38);
+  --on-brand: #1d150a;
+  --accent: #e2a76f;
+  --text: #f3ece1;
+  --muted: #a99d8b;
+  --line: rgb(255 240 215 / 0.09);
+  --ok: #7fcf98;
+  --ok-soft: rgb(127 207 152 / 0.13);
+  --warn: #f0c26e;
+  --warn-soft: rgb(240 194 110 / 0.14);
+  --danger: #f08a7c;
+  --danger-soft: rgb(240 138 124 / 0.13);
+
+  --bg: #0d0b09;
+  --blob-1: rgb(200 160 100 / 0.3);
+  --blob-2: rgb(150 100 55 / 0.26);
+  --blob-3: rgb(230 205 160 / 0.13);
+  --blob-4: rgb(110 95 70 / 0.3);
+  --contour: rgb(230 200 150 / 0.08);
+
+  --glass: rgb(255 245 228 / 0.05);
+  --glass-strong: rgb(255 245 228 / 0.09);
+  --glass-hover: rgb(255 245 228 / 0.11);
+  --glass-border: rgb(255 235 205 / 0.12);
+  --glass-highlight: rgb(255 240 215 / 0.15);
+  --glass-shadow-color: rgb(0 0 0 / 0.5);
+  --input-bg: rgb(255 245 228 / 0.05);
+  --input-bg-focus: rgb(255 245 228 / 0.09);
+  --glass-menu: rgb(28 23 17);
+  color-scheme: dark;
 }
 
 @theme inline {
   --color-brand: var(--brand);
   --color-brand-hover: var(--brand-hover);
   --color-brand-soft: var(--brand-soft);
+  --color-on-brand: var(--on-brand);
   --color-accent: var(--accent);
   --color-text: var(--text);
   --color-muted: var(--muted);
@@ -39,71 +95,138 @@
   --color-warn-soft: var(--warn-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
-  --color-bg: rgb(255 255 255 / 0.35);
+  --color-bg: var(--glass);
   --color-surface: var(--glass-strong);
+  --color-glass-hover: var(--glass-hover);
   --font-sans: var(--font-base), system-ui, sans-serif;
+
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Fondo con manchas de color difuminadas: es lo que el vidrio refracta.
-   Va en una capa fija propia (background-attachment: fixed falla en iOS). */
+/* ─── Fondo: manchas de color + curvas de nivel ────────────────────────
+   Capas fijas propias (background-attachment: fixed falla en iOS). */
 body {
   min-height: 100vh;
   color: var(--text);
-  background: #eef2f8;
+  background: var(--bg);
+  transition: background-color 0.4s ease, color 0.4s ease;
 }
-body::before {
+body::before,
+body::after {
   content: "";
   position: fixed;
-  inset: 0;
   z-index: -1;
+  pointer-events: none;
+}
+body::before {
+  inset: -10%;
   background:
-    radial-gradient(34rem 34rem at 8% 8%, rgb(31 95 168 / 0.55), transparent 65%),
-    radial-gradient(30rem 30rem at 92% 12%, rgb(224 137 43 / 0.45), transparent 65%),
-    radial-gradient(38rem 38rem at 75% 95%, rgb(23 160 140 / 0.4), transparent 65%),
-    radial-gradient(28rem 28rem at 20% 85%, rgb(120 90 200 / 0.3), transparent 65%),
-    linear-gradient(160deg, #e9eff8 0%, #f5efe7 100%);
+    radial-gradient(34rem 34rem at 12% 12%, var(--blob-1), transparent 65%),
+    radial-gradient(30rem 30rem at 88% 16%, var(--blob-2), transparent 65%),
+    radial-gradient(38rem 38rem at 72% 88%, var(--blob-3), transparent 65%),
+    radial-gradient(28rem 28rem at 22% 80%, var(--blob-4), transparent 65%);
+  animation: deriva 40s ease-in-out infinite alternate;
+}
+body::after {
+  inset: -4%;
+  background: var(--contour);
+  -webkit-mask: url(/curvas.svg) center / cover no-repeat;
+  mask: url(/curvas.svg) center / cover no-repeat;
+  animation: deriva-curvas 90s ease-in-out infinite alternate;
 }
 
+@keyframes deriva {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(3%, -2%, 0) scale(1.06); }
+  100% { transform: translate3d(-2%, 3%, 0) scale(1.02); }
+}
+@keyframes deriva-curvas {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(-1.5%, 1%, 0) scale(1.04); }
+}
+
+/* ─── Vidrio ───────────────────────────────────────────────────────── */
 @utility glass {
   background: var(--glass);
   backdrop-filter: blur(var(--glass-blur)) saturate(180%);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-  border: 1px solid var(--border);
-  box-shadow: var(--glass-shadow);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px var(--glass-shadow-color), inset 0 1px 0 var(--glass-highlight);
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    transform 0.25s var(--ease-out-expo),
+    opacity 0.25s ease;
+}
+
+/* Superficie dorada "líquida": brillo superior, cuerpo dorado y fondo más profundo */
+@utility liquido {
+  background:
+    radial-gradient(120% 90% at 50% -20%, rgb(255 255 255 / 0.55), transparent 55%),
+    linear-gradient(180deg, color-mix(in srgb, var(--brand) 78%, white 22%), var(--brand) 55%, color-mix(in srgb, var(--brand) 82%, black 18%));
+  box-shadow: 0 6px 22px var(--brand-glow), inset 0 1px 0 rgb(255 255 255 / 0.5), inset 0 -2px 6px rgb(0 0 0 / 0.15);
 }
 
 @utility card {
   @apply glass rounded-2xl;
 }
 
+@utility card-hover {
+  &:hover {
+    transform: translateY(-2px);
+    background: var(--glass-hover);
+    box-shadow: 0 14px 40px var(--glass-shadow-color), inset 0 1px 0 var(--glass-highlight);
+  }
+}
+
 @utility btn {
-  @apply glass inline-flex cursor-pointer items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-px active:translate-y-0 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45;
+  @apply glass relative inline-flex cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-full px-5 py-2 text-sm font-medium select-none hover:-translate-y-px active:translate-y-0 active:scale-[0.96] disabled:pointer-events-none disabled:opacity-45;
 }
 
 @utility btn-primary {
-  @apply btn text-white;
-  background: linear-gradient(180deg, rgb(31 95 168 / 0.78), rgb(23 74 133 / 0.9));
-  border-color: rgb(255 255 255 / 0.35);
-  box-shadow: 0 6px 20px rgb(31 95 168 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.45);
+  @apply btn;
+  color: var(--on-brand);
+  background:
+    radial-gradient(120% 90% at 50% -20%, rgb(255 255 255 / 0.55), transparent 55%),
+    linear-gradient(180deg, color-mix(in srgb, var(--brand) 78%, white 22%), var(--brand) 55%, color-mix(in srgb, var(--brand) 82%, black 18%));
+  border-color: color-mix(in srgb, var(--brand) 45%, white 40%);
+  box-shadow: 0 6px 22px var(--brand-glow), inset 0 1px 0 rgb(255 255 255 / 0.5), inset 0 -2px 6px rgb(0 0 0 / 0.15);
+  /* Reflejo de luz que cruza el botón al pasar el cursor */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.45) 50%, transparent 65%);
+    transform: translateX(-120%);
+    transition: transform 0.7s var(--ease-out-expo);
+    pointer-events: none;
+  }
   &:hover {
-    box-shadow: 0 10px 28px rgb(31 95 168 / 0.45), inset 0 1px 0 rgb(255 255 255 / 0.55);
+    box-shadow: 0 10px 32px var(--brand-glow), inset 0 1px 0 rgb(255 255 255 / 0.6), inset 0 -2px 6px rgb(0 0 0 / 0.15);
+  }
+  &:hover::after {
+    transform: translateX(120%);
   }
 }
 
 @utility btn-secondary {
   @apply btn text-text;
   &:hover {
-    background: var(--glass-strong);
+    background: var(--glass-hover);
   }
 }
 
 @utility input {
-  @apply w-full rounded-xl px-3 py-2 text-sm text-text outline-none transition placeholder:text-muted/70 focus:ring-2 focus:ring-brand/30;
-  background: rgb(255 255 255 / 0.55);
-  border: 1px solid rgb(255 255 255 / 0.7);
-  box-shadow: inset 0 1px 2px rgb(20 40 80 / 0.08);
+  @apply w-full rounded-xl px-3 py-2 text-sm text-text outline-none placeholder:text-muted/70 focus:ring-2 focus:ring-brand/30;
+  background: var(--input-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.08);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   &:focus {
-    background: rgb(255 255 255 / 0.8);
+    background: var(--input-bg-focus);
+    border-color: color-mix(in srgb, var(--brand) 50%, transparent);
   }
 }
 
@@ -111,25 +234,173 @@ body::before {
   @apply mb-1 block text-sm font-medium text-text;
 }
 
-@media (prefers-reduced-transparency: reduce) {
-  :root {
-    --glass: rgb(255 255 255 / 0.92);
-    --glass-strong: rgb(255 255 255 / 0.96);
+/* ─── Animaciones ──────────────────────────────────────────────────── */
+@keyframes entrar {
+  from { opacity: 0; transform: translateY(10px) scale(0.99); filter: blur(4px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes flotar-entrada {
+  from { opacity: 0; transform: translateY(24px) scale(0.96); filter: blur(10px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.28); }
+  100% { transform: scale(1); }
+}
+@keyframes brillo-ok {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 55%, transparent); }
+  100% { box-shadow: 0 0 0 14px transparent; }
+}
+@keyframes sacudir {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+@keyframes brillo-carga {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+@keyframes trazar {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes llenar {
+  from { transform: scaleX(0); }
+}
+
+/* Entrada de pantalla y listas en cascada (usar style={{"--i": n}}) */
+@utility animar-entrada {
+  animation: entrar 0.5s var(--ease-out-expo) both;
+}
+@utility cascada {
+  animation: entrar 0.55s var(--ease-out-expo) both;
+  animation-delay: calc(min(var(--i, 0), 14) * 40ms);
+}
+@utility flotar-entrada {
+  animation: flotar-entrada 0.8s var(--ease-out-expo) both;
+}
+@utility pop {
+  animation: pop 0.35s var(--ease-spring);
+}
+@utility brillo-ok {
+  animation: brillo-ok 0.7s ease-out;
+}
+@utility sacudir {
+  animation: sacudir 0.4s ease-in-out;
+}
+.esqueleto {
+  border-radius: 1rem;
+  background: linear-gradient(90deg, var(--glass) 25%, var(--glass-hover) 50%, var(--glass) 75%);
+  background-size: 400% 100%;
+  animation: brillo-carga 1.6s ease-in-out infinite;
+}
+@utility barra-llenar {
+  transform-origin: left;
+  animation: llenar 0.9s var(--ease-out-expo) both;
+}
+
+/* Panel desplegable con altura animada */
+.desplegable {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 0.4s var(--ease-out-expo), opacity 0.3s ease;
+}
+.desplegable[data-abierto="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.desplegable > * {
+  overflow: hidden;
+}
+
+/* Casilla de verificación con check dibujado */
+.check {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  flex-shrink: 0;
+  cursor: pointer;
+  border-radius: 0.45rem;
+  border: 1.5px solid color-mix(in srgb, var(--muted) 60%, transparent);
+  background: var(--input-bg);
+  transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.2s var(--ease-spring);
+}
+.check:hover { transform: scale(1.08); }
+.check:active { transform: scale(0.9); }
+.check:checked {
+  background: var(--ok);
+  border-color: var(--ok);
+}
+.check:disabled { cursor: not-allowed; opacity: 0.5; }
+.check-wrap {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+}
+.check-wrap svg {
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  pointer-events: none;
+  fill: none;
+  stroke: var(--on-brand);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.check-wrap path {
+  stroke-dasharray: 22;
+  stroke-dashoffset: 22;
+  transition: stroke-dashoffset 0.35s var(--ease-out-expo) 0.05s;
+}
+.check-wrap .check:checked + svg path {
+  stroke-dashoffset: 0;
+}
+
+/* Lista desplegable abierta: sus contenedores (cada tarjeta de vidrio es su propia capa)
+   suben por encima de las tarjetas vecinas para que el panel no quede tapado. */
+:is(.card, .cascada, .animar-entrada, form, section, aside, li):has([role="combobox"][aria-expanded="true"]) {
+  position: relative;
+  z-index: 40;
+}
+
+/* Cambio de tema: el nuevo tema se expande en círculo desde el botón */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  animation: revelar 0.6s var(--ease-out-expo);
+}
+@keyframes revelar {
+  from { clip-path: circle(0 at var(--tema-x, 100%) var(--tema-y, 0)); }
+  to { clip-path: circle(150vmax at var(--tema-x, 100%) var(--tema-y, 0)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
+  ::view-transition-new(root) {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
+@media (prefers-reduced-transparency: reduce) {
+  :root { --glass: rgb(255 255 255 / 0.92); --glass-strong: rgb(255 255 255 / 0.96); }
+  [data-theme="dark"] { --glass: rgb(20 26 38 / 0.95); --glass-strong: rgb(28 35 50 / 0.97); }
+}
+
 @media print {
-  .no-print {
-    display: none !important;
-  }
-  body,
-  body::before {
-    background: white;
-  }
-  .card {
-    background: white;
-    box-shadow: none;
-    backdrop-filter: none;
-    border-color: #ccc;
-  }
+  .no-print { display: none !important; }
+  :root, [data-theme="dark"] { --text: #000; --muted: #444; --line: #ccc; }
+  body { background: white; color: black; }
+  body::before, body::after { display: none; }
+  .card { background: white; box-shadow: none; backdrop-filter: none; border-color: #ccc; }
 }

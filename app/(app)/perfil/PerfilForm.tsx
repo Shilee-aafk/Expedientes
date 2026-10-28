@@ -22,7 +22,7 @@ export function PerfilForm({ perfil, email }: { perfil: Profile; email: string }
         </div>
         <div className="flex items-center gap-3">
           <button className="btn-primary" disabled={enviando}>Guardar</button>
-          {mensaje && <span className={`text-sm ${mensaje === "Guardado" ? "text-ok" : "text-danger"}`}>{mensaje}</span>}
+          {mensaje && <span className={`text-sm ${mensaje === "Guardado" ? "animar-entrada text-ok" : "sacudir text-danger"}`}>{mensaje === "Guardado" ? "✓ Guardado" : mensaje}</span>}
         </div>
       </form>
 

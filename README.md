@@ -22,6 +22,14 @@ En Supabase → **SQL Editor**, ejecuta en orden:
 
 Las vigencias de 30 días del seed son un punto de partida; ajústalas en *Plantilla*.
 
+Si copias los archivos desde Windows PowerShell, usa `-Encoding UTF8` para que las tildes y la ñ no se dañen:
+
+```powershell
+Get-Content supabase\seed.sql -Raw -Encoding UTF8 | Set-Clipboard
+```
+
+`supabase/migrations/0002_arreglo_duplicados.sql` corrige una plantilla con requisitos duplicados o mal codificados (por ejemplo "dueÃ±o"). Se puede ejecutar más de una vez.
+
 ### 2. Usuarios del equipo
 No hay registro público. Créalos en Supabase → **Authentication → Users → Add user**, con contraseña. Se recomienda desactivar *Allow new users to sign up* en **Authentication → Sign In / Providers**.
 
@@ -42,4 +50,4 @@ npm run lint
 npm run build
 ```
 
-El estilo es "liquid glass" (vidrio translúcido con desenfoque). Los colores están en `app/globals.css` (`:root`) y son provisorios hasta alinearlos con spproyectos.cl.
+El estilo es "liquid glass" con la paleta de Sánchez Paz (dorado champaña), en tema oscuro (por defecto), claro o automático. Los colores están en `app/globals.css` (`:root` y `[data-theme="dark"]`).

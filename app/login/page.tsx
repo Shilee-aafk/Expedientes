@@ -8,7 +8,7 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4">
-      <form action={accion} className="card w-full max-w-sm space-y-4 p-6">
+      <form action={accion} className="card flotar-entrada w-full max-w-sm space-y-4 p-7">
         <div>
           <h1 className="text-xl font-semibold text-brand">Expedientes SPR</h1>
           <p className="text-sm text-muted">Ingresa con tu cuenta del equipo.</p>
@@ -21,7 +21,7 @@ export default function LoginPage() {
           <label className="label" htmlFor="password">Contraseña</label>
           <input className="input" id="password" name="password" type="password" required autoComplete="current-password" />
         </div>
-        {error && <p className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">{error}</p>}
+        {error && <p key={error} className="sacudir rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger">{error}</p>}
         <button className="btn-primary w-full" disabled={enviando}>
           {enviando ? "Ingresando…" : "Ingresar"}
         </button>

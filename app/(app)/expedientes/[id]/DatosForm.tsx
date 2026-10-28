@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Select } from "@/components/Select";
 import type { Expediente, Profile } from "@/lib/types";
 import { guardarDatos } from "../actions";
 
@@ -24,12 +25,12 @@ export function DatosForm({ expediente: e, perfiles }: { expediente: Expediente;
       </div>
       <div>
         <label className="label" htmlFor="profesional_id">Profesional</label>
-        <select className="input" id="profesional_id" name="profesional_id" defaultValue={e.profesional_id ?? ""}>
-          <option value="">Sin asignar</option>
-          {perfiles.map((p) => (
-            <option key={p.id} value={p.id}>{p.nombre}</option>
-          ))}
-        </select>
+        <Select
+          id="profesional_id"
+          name="profesional_id"
+          defaultValue={e.profesional_id ?? ""}
+          opciones={[{ value: "", label: "Sin asignar" }, ...perfiles.map((p) => ({ value: p.id, label: p.nombre }))]}
+        />
       </div>
 
       <h3 className="pt-2 text-sm font-semibold text-muted">Seguimiento del envío</h3>
@@ -48,7 +49,7 @@ export function DatosForm({ expediente: e, perfiles }: { expediente: Expediente;
       </div>
       <div className="flex items-center gap-3">
         <button className="btn-primary" disabled={enviando}>Guardar</button>
-        {mensaje && <span className={`text-sm ${mensaje === "Guardado" ? "text-ok" : "text-danger"}`}>{mensaje}</span>}
+        {mensaje && <span className={`text-sm ${mensaje === "Guardado" ? "animar-entrada text-ok" : "sacudir text-danger"}`}>{mensaje === "Guardado" ? "✓ Guardado" : mensaje}</span>}
       </div>
     </form>
   );

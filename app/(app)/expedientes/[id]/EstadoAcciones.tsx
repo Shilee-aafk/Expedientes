@@ -1,15 +1,18 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
+import { Select } from "@/components/Select";
 import { ESTADOS, ETIQUETA_ESTADO, type EstadoExpediente } from "@/lib/types";
 import { cambiarEstado, eliminarExpediente } from "../actions";
 
 export function EstadoAcciones({ id, estado, listoParaEnviar }: { id: number; estado: EstadoExpediente; listoParaEnviar: boolean }) {
   const [pendiente, iniciar] = useTransition();
   const [mensaje, setMensaje] = useState<string | null>(null);
+  const [mostrado, setMostrado] = useOptimistic(estado);
 
   const cambiar = (nuevo: EstadoExpediente) =>
     iniciar(async () => {
+      setMostrado(nuevo);
       setMensaje(await cambiarEstado(id, nuevo));
     });
 
@@ -25,14 +28,13 @@ export function EstadoAcciones({ id, estado, listoParaEnviar }: { id: number; es
         <p className="text-xs text-muted">Se habilita cuando todos los requisitos obligatorios están completos y vigentes.</p>
       )}
       <label className="label" htmlFor="estado">Cambiar estado</label>
-      <select id="estado" className="input" value={estado} disabled={pendiente} onChange={(e) => cambiar(e.target.value as EstadoExpediente)}>
-        {ESTADOS.map((e) => (
-          <option key={e} value={e}>
-            {ETIQUETA_ESTADO[e]}
-          </option>
-        ))}
-      </select>
-      {mensaje && <p className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">{mensaje}</p>}
+      <Select
+        id="estado"
+        value={mostrado}
+        onChange={(v) => cambiar(v as EstadoExpediente)}
+        opciones={ESTADOS.map((e) => ({ value: e, label: ETIQUETA_ESTADO[e] }))}
+      />
+      {mensaje && <p key={mensaje} className="sacudir rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger">{mensaje}</p>}
       <button
         className="text-xs text-danger hover:underline"
         disabled={pendiente}

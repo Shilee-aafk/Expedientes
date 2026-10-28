@@ -1,3 +1,4 @@
+import { Select } from "@/components/Select";
 import { requireUser } from "@/lib/supabase/server";
 import type { Requisito } from "@/lib/types";
 import { guardarRequisito } from "./actions";
@@ -29,7 +30,7 @@ export default async function PlantillaPage() {
 
 function FilaRequisito({ r, orden }: { r: Requisito | null; orden?: number }) {
   return (
-    <form action={guardarRequisito.bind(null, r?.id ?? null)} className={`card grid items-end gap-3 p-4 sm:grid-cols-[4rem_1fr_5rem_6rem_8rem_auto] ${r && !r.activo ? "opacity-60" : ""}`}>
+    <form action={guardarRequisito.bind(null, r?.id ?? null)} className={`card cascada grid items-end gap-3 p-4 sm:grid-cols-[4rem_1fr_5rem_6rem_8rem_auto] ${r && !r.activo ? "opacity-60" : ""}`}>
       <div>
         <label className="label">Orden</label>
         <input name="orden" type="number" className="input" defaultValue={r?.orden ?? orden} />
@@ -48,11 +49,15 @@ function FilaRequisito({ r, orden }: { r: Requisito | null; orden?: number }) {
       </div>
       <div>
         <label className="label">Desde perfil</label>
-        <select name="origen_perfil" className="input" defaultValue={r?.origen_perfil ?? ""}>
-          <option value="">No</option>
-          <option value="carnet">Carnet prof.</option>
-          <option value="titulo">Título prof.</option>
-        </select>
+        <Select
+          name="origen_perfil"
+          defaultValue={r?.origen_perfil ?? ""}
+          opciones={[
+            { value: "", label: "No" },
+            { value: "carnet", label: "Carnet prof." },
+            { value: "titulo", label: "Título prof." },
+          ]}
+        />
       </div>
       <button className="btn-secondary">{r ? "Guardar" : "Agregar"}</button>
       <div className="flex flex-wrap gap-4 text-sm sm:col-span-6">

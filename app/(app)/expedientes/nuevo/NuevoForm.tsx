@@ -1,13 +1,14 @@
 "use client";
 
 import { useActionState } from "react";
+import { Select } from "@/components/Select";
 import { crearExpediente } from "../actions";
 
 export function NuevoForm({ perfiles, usuarioId }: { perfiles: { id: string; nombre: string }[]; usuarioId: string }) {
   const [error, accion, enviando] = useActionState(crearExpediente, null);
 
   return (
-    <form action={accion} className="card space-y-4 p-6">
+    <form action={accion} className="card cascada space-y-4 p-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="label" htmlFor="codigo">Código *</label>
@@ -27,14 +28,12 @@ export function NuevoForm({ perfiles, usuarioId }: { perfiles: { id: string; nom
         </div>
         <div className="sm:col-span-2">
           <label className="label" htmlFor="profesional_id">Profesional responsable</label>
-          <select className="input" id="profesional_id" name="profesional_id" defaultValue={usuarioId}>
-            <option value="">Sin asignar</option>
-            {perfiles.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nombre}
-              </option>
-            ))}
-          </select>
+          <Select
+            id="profesional_id"
+            name="profesional_id"
+            defaultValue={usuarioId}
+            opciones={[{ value: "", label: "Sin asignar" }, ...perfiles.map((p) => ({ value: p.id, label: p.nombre }))]}
+          />
           <p className="mt-1 text-xs text-muted">Su carnet y título se adjuntan solos si están cargados en su perfil.</p>
         </div>
         <div className="sm:col-span-2">
@@ -53,7 +52,7 @@ export function NuevoForm({ perfiles, usuarioId }: { perfiles: { id: string; nom
           <textarea className="input" id="notas" name="notas" rows={2} />
         </div>
       </div>
-      {error && <p className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">{error}</p>}
+      {error && <p key={error} className="sacudir rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger">{error}</p>}
       <button className="btn-primary" disabled={enviando}>
         {enviando ? "Creando…" : "Crear expediente"}
       </button>

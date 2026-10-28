@@ -24,41 +24,53 @@ const iconos = {
 };
 
 const enlaces = [
-  { href: "/expedientes", texto: "Expedientes", icono: iconos.expedientes, exacto: true },
+  { href: "/expedientes", texto: "Expedientes", icono: iconos.expedientes },
   { href: "/expedientes/nuevo", texto: "Nuevo", icono: iconos.nuevo },
   { href: "/configuracion/plantilla", texto: "Plantilla", icono: iconos.plantilla },
 ];
 
-/** Menú principal: burbuja larga flotante, fija abajo al centro, con tres botones en píldora. */
+function indiceActivo(ruta: string) {
+  if (ruta.startsWith("/expedientes/nuevo")) return 1;
+  if (ruta.startsWith("/configuracion/plantilla")) return 2;
+  if (ruta.startsWith("/expedientes")) return 0;
+  return -1;
+}
+
+/**
+ * Menú principal: burbuja larga flotante, fija abajo al centro.
+ * La píldora activa se desliza con efecto elástico entre los tres botones.
+ */
 export function MenuInferior() {
-  const ruta = usePathname();
-  const activo = (href: string, exacto?: boolean) =>
-    exacto ? ruta === href || /^\/expedientes\/\d+/.test(ruta) : ruta.startsWith(href);
+  const activo = indiceActivo(usePathname());
 
   return (
     <nav
       aria-label="Menú principal"
-      className="glass no-print fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-20 flex w-[min(44rem,calc(100%-1.5rem))] -translate-x-1/2 items-center justify-evenly gap-2 rounded-full px-2 py-2"
-      style={{ boxShadow: "0 12px 40px rgb(20 40 80 / 0.22), inset 0 1px 0 rgb(255 255 255 / 0.8)" }}
+      className="glass no-print fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-20 w-[min(40rem,calc(100%-1.5rem))] -translate-x-1/2 rounded-full p-1.5 flotar-entrada"
     >
-      {enlaces.map((e) => {
-        const on = activo(e.href, e.exacto);
-        return (
-          <Link
-            key={e.href}
-            href={e.href}
-            aria-current={on ? "page" : undefined}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition sm:flex-none sm:px-6 ${
-              on
-                ? "border-white/40 bg-brand/85 text-white shadow-[0_4px_14px_rgb(31_95_168/0.4),inset_0_1px_0_rgb(255_255_255/0.4)]"
-                : "border-white/60 bg-white/45 text-text hover:bg-white/70 hover:text-brand"
-            }`}
-          >
-            {e.icono}
-            <span className="max-[360px]:hidden">{e.texto}</span>
-          </Link>
-        );
-      })}
+      <div className="relative grid grid-cols-3">
+        <span
+          aria-hidden
+          className="liquido absolute inset-y-0 left-0 w-1/3 rounded-full transition-[transform,opacity] duration-500 ease-[var(--ease-spring)]"
+          style={{ transform: `translateX(${Math.max(activo, 0) * 100}%)`, opacity: activo < 0 ? 0 : 1 }}
+        />
+        {enlaces.map((e, i) => {
+          const on = i === activo;
+          return (
+            <Link
+              key={e.href}
+              href={e.href}
+              aria-current={on ? "page" : undefined}
+              className={`relative z-10 flex items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium transition-colors duration-300 active:scale-95 ${
+                on ? "text-on-brand" : "text-muted hover:text-text"
+              }`}
+            >
+              <span className={`transition-transform duration-500 ease-[var(--ease-spring)] ${on ? "scale-110" : ""}`}>{e.icono}</span>
+              <span className="max-[360px]:hidden">{e.texto}</span>
+            </Link>
+          );
+        })}
+      </div>
     </nav>
   );
 }
