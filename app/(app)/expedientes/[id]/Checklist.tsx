@@ -5,7 +5,7 @@ import { Confirmar } from "@/components/Confirmar";
 import { Interruptor } from "@/components/Interruptor";
 import { cantidadRequerida, fechaVencimiento, itemCumplido, vigencia, type Vigencia } from "@/lib/checklist";
 import { formatoFecha } from "@/lib/formato";
-import { createClient } from "@/lib/supabase/client";
+import { subirArchivo } from "@/lib/subir";
 import type { Item } from "@/lib/types";
 import { actualizarItem, eliminarItem, type CambioItem } from "../actions";
 
@@ -65,12 +65,13 @@ function ChecklistItem({ item: real, indice, numDuenos, hoy, expedienteId }: Pro
 
   async function subir(archivo: File) {
     setSubiendo(true);
-    const limpio = archivo.name.normalize("NFD").replace(/[^\w.-]+/g, "_");
-    const path = `expedientes/${expedienteId}/${item.id}/${Date.now()}-${limpio}`;
-    const { error } = await createClient().storage.from("documentos").upload(path, archivo);
-    setSubiendo(false);
-    if (error) return setError("No se pudo subir el archivo: " + error.message);
-    guardar({ archivo_path: path });
+    try {
+      guardar({ archivo_path: await subirArchivo(`expedientes/${expedienteId}/${item.id}`, archivo) });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSubiendo(false);
+    }
   }
 
   const borde = noAplica ? "opacity-55" : cumplido ? "border-ok/40" : v === "vencido" ? "border-danger/50" : "";

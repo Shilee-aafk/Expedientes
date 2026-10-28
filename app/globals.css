@@ -150,7 +150,6 @@ body::after {
 @utility glass {
   background: var(--glass);
   backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
   border: 1px solid var(--glass-border);
   box-shadow: 0 8px 32px var(--glass-shadow-color), inset 0 1px 0 var(--glass-highlight);
   transition:
@@ -323,6 +322,14 @@ body::after {
 .desplegable > * {
   overflow: hidden;
 }
+/* Ya abierto deja de recortar, para que una lista desplegable interna pueda sobresalir */
+.desplegable[data-abierto="true"] > * {
+  animation: sin-recorte 0.4s forwards;
+}
+@keyframes sin-recorte {
+  0%, 99% { overflow: hidden; }
+  100% { overflow: visible; }
+}
 
 /* Casilla de verificación con check dibujado */
 .check {
@@ -443,7 +450,6 @@ dialog.dialogo[open] {
 dialog.dialogo::backdrop {
   background: rgb(0 0 0 / 0.35);
   backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
   animation: aparecer 0.3s ease;
 }
 @keyframes aparecer {

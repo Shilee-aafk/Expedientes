@@ -1,14 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireUser } from "@/lib/supabase/server";
+import * as repo from "@/lib/repo";
+import { requireUser } from "@/lib/sesion";
 
-function leer(f: FormData) {
+function leer(f: FormData): repo.DatosRequisito {
   const dias = Number(f.get("vence_en_dias"));
   const origen = String(f.get("origen_perfil") ?? "");
   return {
     orden: Number(f.get("orden")) || 0,
-    nombre: String(f.get("nombre")).trim(),
+    nombre: String(f.get("nombre") ?? "").trim(),
     descripcion: String(f.get("descripcion") ?? "").trim() || null,
     cantidad: Math.max(1, Number(f.get("cantidad")) || 1),
     opcional: f.get("opcional") === "on",
@@ -19,19 +20,29 @@ function leer(f: FormData) {
   };
 }
 
-export async function guardarRequisito(id: number | null, f: FormData) {
-  const { supabase } = await requireUser();
+/** Devuelve un mensaje de error, o null si se guardó. */
+export async function guardarRequisito(id: number | null, f: FormData): Promise<string | null> {
+  await requireUser();
   const datos = leer(f);
-  if (!datos.nombre) return;
-  if (id) await supabase.from("requisitos_plantilla").update(datos).eq("id", id);
-  else await supabase.from("requisitos_plantilla").insert(datos);
+  if (!datos.nombre) return "Falta el nombre del requisito.";
+  repo.guardarRequisito(id, datos);
+  revalidatePath("/configuracion/plantilla");
+  return null;
+}
+
+export async function cambiarActivo(id: number, activo: boolean) {
+  await requireUser();
+  const r = repo.listarRequisitos().find((x) => x.id === id);
+  if (!r) return;
+  const { id: _id, ...datos } = r;
+  void _id;
+  repo.guardarRequisito(id, { ...datos, activo });
   revalidatePath("/configuracion/plantilla");
 }
 
 /** Los expedientes ya creados conservan su copia del requisito. */
 export async function eliminarRequisito(id: number) {
-  const { supabase } = await requireUser();
-  const { error } = await supabase.from("requisitos_plantilla").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  await requireUser();
+  repo.eliminarRequisito(id);
   revalidatePath("/configuracion/plantilla");
 }

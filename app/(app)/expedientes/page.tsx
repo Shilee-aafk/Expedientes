@@ -3,14 +3,9 @@ import { Contador } from "@/components/Contador";
 import { Select } from "@/components/Select";
 import { Progreso } from "@/components/ui";
 import { hoyChile, resumen } from "@/lib/checklist";
-import { requireUser } from "@/lib/supabase/server";
-import { ESTADOS, ETIQUETA_ESTADO, type Expediente, type Item } from "@/lib/types";
-
-type Fila = Expediente & {
-  items: Item[];
-  duenos: { nombre: string }[];
-  profesional: { nombre: string } | null;
-};
+import { listarExpedientes } from "@/lib/repo";
+import { requireUser } from "@/lib/sesion";
+import { ESTADOS, ETIQUETA_ESTADO } from "@/lib/types";
 
 export default async function ExpedientesPage({
   searchParams,
@@ -18,15 +13,12 @@ export default async function ExpedientesPage({
   searchParams: Promise<{ q?: string; estado?: string }>;
 }) {
   const { q, estado } = await searchParams;
-  const { supabase } = await requireUser();
+  await requireUser();
 
   // Se traen todos (el equipo maneja pocos expedientes) para que el panel resumen no dependa del filtro
-  const { data, error } = await supabase
-    .from("expedientes")
-    .select("*, items:expediente_items(*), duenos(nombre), profesional:profiles!expedientes_profesional_id_fkey(nombre)")
-    .order("updated_at", { ascending: false });
+  const datos = listarExpedientes();
   const hoy = hoyChile();
-  const todas = ((data ?? []) as unknown as Fila[]).map((e) => ({ ...e, r: resumen(e.items, e.duenos.length, hoy) }));
+  const todas = datos.map((e) => ({ ...e, r: resumen(e.items, e.duenos.length, hoy) }));
 
   const t = q?.trim().toLowerCase();
   const filas = todas.filter(
@@ -92,8 +84,6 @@ export default async function ExpedientesPage({
           </Link>
         )}
       </form>
-
-      {error && <p className="sacudir text-sm text-danger">{error.message}</p>}
 
       <ul className="space-y-2">
         {filas.map((e, i) => (

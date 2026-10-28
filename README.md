@@ -1,52 +1,54 @@
 # Expedientes SPR
 
-Web para controlar el checklist de los expedientes de **subdivisión de predios rústicos** antes de enviarlos a terceros autorizados.
+Web para controlar el checklist de los expedientes de **subdivisión de predios rústicos** antes de enviarlos a terceros autorizados. Funciona **localmente**: la base de datos y los archivos quedan en el mismo computador.
 
 - Checklist por expediente con los 13 requisitos (editables en *Plantilla*).
+- Código automático por año: EXP-001-2026, EXP-002-2026…
 - Contador para los 7 planos firmados y un carnet por cada dueño.
-- Vigencia de certificados: con la fecha de emisión se calcula el vencimiento y se avisa "por vencer" o "vencido".
+- Vigencia de certificados: con la fecha de emisión avisa "por vencer" o "vencido".
 - "Listo para enviar" solo se habilita con todo completo y vigente.
-- Archivos adjuntos por requisito (PDF, imágenes, KMZ) en almacenamiento privado.
-- El carnet y el título del profesional se cargan una vez en *Mi perfil* y se adjuntan solos.
-- Seguimiento del envío (tercero autorizado, fechas, observaciones) e historial de cambios.
-- Carátula imprimible o en PDF.
+- Archivos adjuntos por requisito (PDF, imágenes, KMZ).
+- El carnet y el título del profesional se cargan una vez en *Mi perfil* y se adjuntan solos en los expedientes que crea.
+- Seguimiento del envío, historial de cambios con autor y carátula imprimible.
+- Usuarios con contraseña; el equipo se administra desde *Mi perfil*.
 
-Stack: Next.js 15 + Tailwind 4 + Supabase (login, Postgres, Storage).
+Stack: Next.js 15 + Tailwind 4 + SQLite (el módulo `node:sqlite` incluido en Node.js, sin instalar nada aparte).
 
-## Puesta en marcha
+## Requisitos
+- **Node.js 22.13 o superior** (recomendado: la versión LTS más reciente).
 
-### 1. Base de datos (una sola vez)
-En Supabase → **SQL Editor**, ejecuta en orden:
-1. `supabase/migrations/0001_init.sql`: tablas, seguridad, historial y bucket `documentos`.
-2. `supabase/seed.sql`: los 13 requisitos.
-3. `supabase/migrations/0003_codigo_automatico.sql`: código automático EXP-001-2026 (se reinicia cada año) y el creador como profesional del expediente.
+## Uso
 
-Las vigencias de 30 días del seed son un punto de partida; ajústalas en *Plantilla*.
-
-Si copias los archivos desde Windows PowerShell, usa `-Encoding UTF8` para que las tildes y la ñ no se dañen:
-
-```powershell
-Get-Content supabase\seed.sql -Raw -Encoding UTF8 | Set-Clipboard
-```
-
-`supabase/migrations/0002_arreglo_duplicados.sql` corrige una plantilla con requisitos duplicados o mal codificados (por ejemplo "dueÃ±o"). Se puede ejecutar más de una vez.
-
-### 2. Usuarios del equipo
-No hay registro público. Créalos en Supabase → **Authentication → Users → Add user**, con contraseña. Se recomienda desactivar *Allow new users to sign up* en **Authentication → Sign In / Providers**.
-
-### 3. Correr la app
 ```bash
-cp .env.example .env.local   # completar URL y anon key (Project Settings → API)
 npm install
-npm run dev                  # http://localhost:3000
+npm run build
+npm start          # http://localhost:3000
 ```
 
-### 4. Publicar
-Importa el repositorio en Vercel y agrega las dos variables de `.env.example`.
+La primera vez, la app pide crear el **usuario administrador**. Después, desde *Mi perfil → Equipo*, se agregan las demás personas.
+
+Para desarrollo (más lento, recarga al editar código): `npm run dev`.
+
+## Datos y respaldo
+Todo queda en la carpeta `datos/` del proyecto:
+- `datos/expedientes.db`: la base de datos.
+- `datos/archivos/`: los documentos adjuntos.
+
+**Respaldar = copiar la carpeta `datos/`** (con la app detenida, o copiando también los archivos `-wal` y `-shm`). Para usar otra ubicación, define la variable `DATOS_DIR`.
+
+## Red local (más adelante)
+Para que otros computadores de la oficina entren:
+
+```bash
+npm run build
+npm run red        # escucha en todas las interfaces, puerto 3000
+```
+
+Luego, desde otro equipo, abre `http://<IP-de-este-PC>:3000`. Es posible que el firewall de Windows pida permitir Node.js en redes privadas.
 
 ## Desarrollo
 ```bash
-npm test        # lógica del checklist (lib/checklist.ts)
+npm test        # lógica del checklist y de la base de datos
 npm run lint
 npm run build
 ```

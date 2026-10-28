@@ -1,36 +1,15 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({ request });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => request.cookies.getAll(),
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-        },
-      },
-    },
-  );
-
-  // getClaims renueva la sesión si expiró y valida el token (localmente con claves asimétricas)
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims?.sub;
-
+/**
+ * Filtro rápido: sin cookie de sesión, al login. La validez real de la sesión
+ * la comprueba requireUser contra la base de datos.
+ */
+export function middleware(request: NextRequest) {
   const enLogin = request.nextUrl.pathname.startsWith("/login");
-  if (!user && !enLogin) {
+  if (!enLogin && !request.cookies.has("sesion")) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
-  if (user && enLogin) {
-    return NextResponse.redirect(new URL("/expedientes", request.url));
-  }
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {

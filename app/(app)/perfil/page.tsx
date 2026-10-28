@@ -1,15 +1,16 @@
-import { requireUser } from "@/lib/supabase/server";
-import type { Profile } from "@/lib/types";
+import { listarUsuarios } from "@/lib/repo";
+import { requireUser } from "@/lib/sesion";
+import { Equipo } from "./Equipo";
 import { PerfilForm } from "./PerfilForm";
 
 export default async function PerfilPage() {
-  const { supabase, user } = await requireUser();
-  const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+  const { user } = await requireUser();
 
   return (
     <div className="mx-auto max-w-xl space-y-4">
-      <h1 className="text-2xl font-semibold">Mi perfil</h1>
-      <PerfilForm perfil={data as Profile} email={user.email ?? ""} />
+      <h1 className="text-2xl font-semibold tracking-tight">Mi perfil</h1>
+      <PerfilForm perfil={user} />
+      <Equipo usuarios={listarUsuarios()} yoId={user.id} />
     </div>
   );
 }
