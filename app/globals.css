@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+/* Colores de marca: provisorios hasta tomar los de spproyectos.cl.
+   Cambiar aquí actualiza toda la app. */
+:root {
+  --brand: #1f5fa8;
+  --brand-hover: #174a85;
+  --brand-soft: rgb(31 95 168 / 0.12);
+  --accent: #e0892b;
+  --text: #142033;
+  --muted: #4f5d70;
+  --border: rgb(255 255 255 / 0.55);
+  --line: rgb(20 32 51 / 0.1);
+  --ok: #17784a;
+  --ok-soft: rgb(23 120 74 / 0.12);
+  --warn: #9a5800;
+  --warn-soft: rgb(224 137 43 / 0.16);
+  --danger: #b42318;
+  --danger-soft: rgb(180 35 24 / 0.1);
+
+  /* Vidrio */
+  --glass: rgb(255 255 255 / 0.45);
+  --glass-strong: rgb(255 255 255 / 0.68);
+  --glass-blur: 20px;
+  --glass-shadow: 0 8px 32px rgb(20 40 80 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.75);
+}
+
+@theme inline {
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-accent: var(--accent);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-border: var(--line);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-bg: rgb(255 255 255 / 0.35);
+  --color-surface: var(--glass-strong);
+  --font-sans: var(--font-base), system-ui, sans-serif;
+}
+
+/* Fondo con manchas de color difuminadas: es lo que el vidrio refracta.
+   Va en una capa fija propia (background-attachment: fixed falla en iOS). */
+body {
+  min-height: 100vh;
+  color: var(--text);
+  background: #eef2f8;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(34rem 34rem at 8% 8%, rgb(31 95 168 / 0.55), transparent 65%),
+    radial-gradient(30rem 30rem at 92% 12%, rgb(224 137 43 / 0.45), transparent 65%),
+    radial-gradient(38rem 38rem at 75% 95%, rgb(23 160 140 / 0.4), transparent 65%),
+    radial-gradient(28rem 28rem at 20% 85%, rgb(120 90 200 / 0.3), transparent 65%),
+    linear-gradient(160deg, #e9eff8 0%, #f5efe7 100%);
+}
+
+@utility glass {
+  background: var(--glass);
+  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  border: 1px solid var(--border);
+  box-shadow: var(--glass-shadow);
+}
+
+@utility card {
+  @apply glass rounded-2xl;
+}
+
+@utility btn {
+  @apply glass inline-flex cursor-pointer items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-px active:translate-y-0 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45;
+}
+
+@utility btn-primary {
+  @apply btn text-white;
+  background: linear-gradient(180deg, rgb(31 95 168 / 0.78), rgb(23 74 133 / 0.9));
+  border-color: rgb(255 255 255 / 0.35);
+  box-shadow: 0 6px 20px rgb(31 95 168 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.45);
+  &:hover {
+    box-shadow: 0 10px 28px rgb(31 95 168 / 0.45), inset 0 1px 0 rgb(255 255 255 / 0.55);
+  }
+}
+
+@utility btn-secondary {
+  @apply btn text-text;
+  &:hover {
+    background: var(--glass-strong);
+  }
+}
+
+@utility input {
+  @apply w-full rounded-xl px-3 py-2 text-sm text-text outline-none transition placeholder:text-muted/70 focus:ring-2 focus:ring-brand/30;
+  background: rgb(255 255 255 / 0.55);
+  border: 1px solid rgb(255 255 255 / 0.7);
+  box-shadow: inset 0 1px 2px rgb(20 40 80 / 0.08);
+  &:focus {
+    background: rgb(255 255 255 / 0.8);
+  }
+}
+
+@utility label {
+  @apply mb-1 block text-sm font-medium text-text;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass: rgb(255 255 255 / 0.92);
+    --glass-strong: rgb(255 255 255 / 0.96);
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body,
+  body::before {
+    background: white;
+  }
+  .card {
+    background: white;
+    box-shadow: none;
+    backdrop-filter: none;
+    border-color: #ccc;
+  }
+}
