@@ -43,3 +43,6 @@ next-env.d.ts
 
 # datos locales (base SQLite y archivos adjuntos)
 /datos/
+
+# app de escritorio
+/dist-app/

@@ -1,0 +1,59 @@
+# App de escritorio para Windows: instalador .exe (NSIS).
+# Se genera con: npm run app:windows  →  dist-app/
+appId: cl.spproyectos.expedientes
+productName: Expedientes SPR
+electronVersion: 45.1.0
+directories:
+  app: electron          # solo el proceso principal; el servidor va como recurso aparte
+  output: dist-app
+  buildResources: electron
+files:
+  - main.cjs
+  - icono.png
+  - package.json
+  - "!**/node_modules/**"
+# La app no tiene dependencias propias: no reconstruir ni buscar módulos nativos
+npmRebuild: false
+nodeGypRebuild: false
+buildDependenciesFromSource: false
+extraResources:
+  # Desde .next (no desde .next/standalone): electron-builder siempre descarta el
+  # node_modules de la raíz del origen, y el servidor lo necesita.
+  - from: .next
+    to: .
+    filter:
+      - "standalone/**/*"
+      - "standalone/node_modules/**/*"
+      - "!standalone/datos/**"
+asar: true
+# Tamaño: solo español e inglés (Electron trae ~55 idiomas) y compresión máxima
+electronLanguages: [es, es-419, en-US]
+compression: maximum
+win:
+  target:
+    # Un solo .exe que se abre con doble clic, sin instalar (ideal para enviar)
+    - target: portable
+      arch: [x64]
+  icon: electron/icono.ico
+  # Sin Wine no se puede editar el .exe interno (ícono/versión); el .exe portable sí lleva ícono
+  signAndEditExecutable: false
+portable:
+  artifactName: "Expedientes-SPR-${version}.exe"
+  # Mensaje mientras se descomprime al abrir
+  unpackDirName: ExpedientesSPR
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: Expedientes SPR
+  artifactName: "Expedientes-SPR-Instalador-${version}.exe"
+  installerIcon: electron/icono.ico
+  uninstallerIcon: electron/icono.ico
+  installerHeaderIcon: electron/icono.ico
+  differentialPackage: false
+  installerLanguages: [es_ES]
+  language: "3082"
+  # Al desinstalar NO se borran los datos (%APPDATA%\Expedientes SPR)
+  deleteAppDataOnUninstall: false

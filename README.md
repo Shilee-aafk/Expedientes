@@ -36,6 +36,19 @@ Todo queda en la carpeta `datos/` del proyecto:
 
 **Respaldar = copiar la carpeta `datos/`** (con la app detenida, o copiando también los archivos `-wal` y `-shm`). Para usar otra ubicación, define la variable `DATOS_DIR`.
 
+## App de escritorio para Windows (.exe)
+
+```bash
+npm run app:windows
+```
+
+Genera `dist-app/Expedientes-SPR-<versión>.exe` (~107 MB): un solo archivo **portable** que se abre con doble clic, sin instalar. Por dentro levanta el servidor y muestra la app en su propia ventana.
+
+- Los datos de la app de escritorio quedan en `%APPDATA%\Expedientes SPR\datos` (base y adjuntos), separados de la carpeta del proyecto. Respaldar = copiar esa carpeta.
+- Cada computador que use el `.exe` tiene sus propios datos.
+- Windows SmartScreen puede advertir que la app "no es reconocida" porque no está firmada digitalmente: *Más información → Ejecutar de todas formas*.
+- Para probar la ventana de escritorio en el propio equipo de desarrollo: `npm run app:probar`.
+
 ## Red local (más adelante)
 Para que otros computadores de la oficina entren:
 
