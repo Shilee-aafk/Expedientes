@@ -3,6 +3,7 @@
 import { useOptimistic, useState, useTransition } from "react";
 import { Confirmar } from "@/components/Confirmar";
 import { Interruptor } from "@/components/Interruptor";
+import { SelectorFecha } from "@/components/SelectorFecha";
 import { cantidadRequerida, fechaVencimiento, itemCumplido, vigencia, type Vigencia } from "@/lib/checklist";
 import { formatoFecha } from "@/lib/formato";
 import { subirArchivo } from "@/lib/subir";
@@ -148,8 +149,8 @@ function ChecklistItem({ item: real, indice, numDuenos, hoy, expedienteId }: Pro
           <div className="mt-3 grid gap-3 border-t border-border pt-3 sm:grid-cols-2">
             {item.vence_en_dias && (
               <div>
-                <label className="label">Fecha de emisión</label>
-                <input type="date" className="input" defaultValue={item.fecha_emision ?? ""} max={hoy} onChange={(e) => guardar({ fecha_emision: e.target.value || null })} />
+                <label className="label" htmlFor={`emision-${item.id}`}>Fecha de emisión</label>
+                <SelectorFecha id={`emision-${item.id}`} value={item.fecha_emision} max={hoy} onChange={(f) => guardar({ fecha_emision: f })} />
               </div>
             )}
             <div>
