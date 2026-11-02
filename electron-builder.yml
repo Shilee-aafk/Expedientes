@@ -49,10 +49,10 @@ nsis:
   language: "3082"
   # Al desinstalar NO se borran los datos (%APPDATA%\Expedientes SPR)
   deleteAppDataOnUninstall: false
-# Las versiones se publican en un repositorio PÚBLICO solo con instaladores (el del código es privado):
+# Las versiones se publican como "Releases" de este mismo repositorio (público):
 # la app descarga de ahí sin necesitar ninguna clave.
 publish:
   provider: github
   owner: Shilee-aafk
-  repo: Expedientes-releases
+  repo: Expedientes
   releaseType: release

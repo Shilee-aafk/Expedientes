@@ -1,4 +1,4 @@
-# Compila el instalador de Windows y lo publica en el repositorio público de versiones.
+# Compila el instalador de Windows y lo publica como Release de este repositorio.
 # Se activa al subir una etiqueta vX.Y.Z (ver scripts/publicar-version.mjs).
 name: Publicar app de escritorio
 
@@ -6,6 +6,10 @@ on:
   push:
     tags: ["v*.*.*"]
   workflow_dispatch:
+
+# Permiso para crear la Release con el token propio de GitHub Actions (sin tokens extra)
+permissions:
+  contents: write
 
 jobs:
   windows:
@@ -46,5 +50,4 @@ jobs:
       - name: Crear instalador y publicarlo
         run: npx electron-builder --win --publish always
         env:
-          # Token con permiso de escritura (Contents) sobre Shilee-aafk/Expedientes-releases
-          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -43,17 +43,15 @@ La app de escritorio se distribuye con un **instalador** (`Expedientes-SPR-Insta
 - Los datos quedan en `%APPDATA%\Expedientes SPR\datos` (base y adjuntos) y **no se tocan** al actualizar ni al desinstalar. Respaldar = copiar esa carpeta.
 - Windows SmartScreen puede advertir que la app "no es reconocida" porque no está firmada: *Más información → Ejecutar de todas formas*.
 
-### Configuración inicial (una sola vez)
-1. Crear en GitHub el repositorio **público** `Shilee-aafk/Expedientes-releases` (vacío, sin código: solo guarda los instaladores; el del código sigue privado).
-2. Crear un token *fine-grained* en GitHub (*Settings → Developer settings → Personal access tokens*) con acceso solo a `Expedientes-releases` y permiso **Contents: Read and write**.
-3. En el repositorio del código: *Settings → Secrets and variables → Actions → New repository secret*, nombre `RELEASES_TOKEN`, valor: el token.
+### Requisito
+El repositorio `Shilee-aafk/Expedientes` debe ser **público**: la app descarga las versiones desde sus *Releases* sin ninguna clave. GitHub Actions las publica con su propio permiso (`GITHUB_TOKEN`), no hay tokens que configurar.
 
 ### Publicar una versión nueva
 ```bash
 npm run publicar -- 0.2.0
 git push --follow-tags
 ```
-GitHub Actions (`.github/workflows/publicar-app.yml`) corre las pruebas, compila el instalador en Windows y lo publica en `Expedientes-releases`. Las apps instaladas lo detectan solas. El instalador de cada versión queda en la página *Releases* de ese repositorio, para instalar en PCs nuevos.
+GitHub Actions (`.github/workflows/publicar-app.yml`) corre las pruebas, compila el instalador en Windows y lo publica como *Release* del repositorio. Las apps instaladas lo detectan solas. El instalador de cada versión queda en la página *Releases*, para instalar en PCs nuevos.
 
 ### Compilar localmente
 - `npm run app:carpeta`: la app sin instalador en `dist-app/win-unpacked/` (para revisar el contenido).
