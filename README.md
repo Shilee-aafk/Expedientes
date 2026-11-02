@@ -49,9 +49,9 @@ El repositorio `Shilee-aafk/Expedientes` debe ser **público**: la app descarga 
 ### Publicar una versión nueva
 ```bash
 npm run publicar -- 0.2.0
-git push --follow-tags
+git push
 ```
-GitHub Actions (`.github/workflows/publicar-app.yml`) corre las pruebas, compila el instalador en Windows y lo publica como *Release* del repositorio. Las apps instaladas lo detectan solas. El instalador de cada versión queda en la página *Releases*, para instalar en PCs nuevos.
+Al detectar la versión nueva, GitHub Actions (`.github/workflows/publicar-app.yml`) corre las pruebas, crea la etiqueta `v0.2.0`, compila el instalador en Windows y lo publica como *Release* del repositorio (si esa versión ya estaba publicada, no hace nada). Las apps instaladas lo detectan solas. El instalador de cada versión queda en la página *Releases*, para instalar en PCs nuevos.
 
 ### Compilar localmente
 - `npm run app:carpeta`: la app sin instalador en `dist-app/win-unpacked/` (para revisar el contenido).

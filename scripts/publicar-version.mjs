@@ -1,7 +1,7 @@
 // Prepara una versión nueva de la app de escritorio:
 //   npm run publicar -- 0.2.0
-// Cambia la versión en package.json y electron/package.json, hace commit y crea la
-// etiqueta v0.2.0. Al subirla (git push --follow-tags), GitHub Actions compila el
+// Cambia la versión en package.json y electron/package.json y hace commit. Al subirlo
+// (git push), GitHub Actions detecta la versión nueva, la etiqueta, compila el
 // instalador y lo publica; las apps instaladas lo detectan y se actualizan.
 import { execSync } from "node:child_process";
 import fs from "node:fs";
@@ -38,6 +38,5 @@ for (const archivo of archivos) {
 }
 sh(`git add ${archivos.join(" ")}`);
 sh(`git commit -m "Versión ${version}"`);
-sh(`git tag v${version}`);
-console.log(`Versión ${version} lista (commit y etiqueta v${version}).`);
-console.log("Para publicarla:  git push --follow-tags");
+console.log(`Versión ${version} lista (commit hecho).`);
+console.log("Para publicarla:  git push");
