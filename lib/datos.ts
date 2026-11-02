@@ -6,7 +6,7 @@ export type { HistorialFila } from "./repo";
 
 export async function cargarExpediente(id: number) {
   await requireUser();
-  const datos = Number.isInteger(id) ? repo.cargarExpediente(id) : null;
+  const datos = Number.isInteger(id) ? await repo.cargarExpediente(id) : null;
   if (!datos) notFound();
   return datos;
 }

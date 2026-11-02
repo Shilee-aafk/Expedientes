@@ -1,45 +1,34 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-import { DIR_ARCHIVOS } from "./db";
+import { createClient } from "./supabase/server";
+
+/** Bucket privado de Supabase Storage con todos los adjuntos. */
+export const BUCKET = "documentos";
 
 /** Carpetas válidas para adjuntos: expedientes/<id>/<item> o perfiles/<usuario>. */
-const CARPETA_VALIDA = /^(expedientes\/\d+\/\d+|perfiles\/\d+)$/;
+const CARPETA_VALIDA = /^(expedientes\/\d+\/\d+|perfiles\/[0-9a-f-]{36})$/;
 
-export const TIPOS: Record<string, string> = {
-  ".pdf": "application/pdf",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".png": "image/png",
-  ".webp": "image/webp",
-  ".kmz": "application/vnd.google-earth.kmz",
-  ".kml": "application/vnd.google-earth.kml+xml",
-  ".dwg": "application/acad",
-  ".zip": "application/zip",
-};
-
-/** Ruta absoluta dentro de la carpeta de archivos, o null si intenta salirse de ella. */
-export function rutaSegura(relativa: string): string | null {
-  const abs = path.resolve(DIR_ARCHIVOS, relativa);
-  return abs.startsWith(DIR_ARCHIVOS + path.sep) ? abs : null;
+export function nombreLimpio(nombre: string) {
+  return nombre.normalize("NFD").replace(/[^\w.-]+/g, "_").slice(-120) || "archivo";
 }
 
 export async function guardarArchivo(carpeta: string, archivo: File): Promise<string> {
   if (!CARPETA_VALIDA.test(carpeta)) throw new Error("Carpeta inválida");
-  const limpio = archivo.name.normalize("NFD").replace(/[^\w.-]+/g, "_").slice(-120) || "archivo";
-  const relativa = `${carpeta}/${Date.now()}-${limpio}`;
-  const abs = rutaSegura(relativa);
-  if (!abs) throw new Error("Ruta inválida");
-  await fs.mkdir(path.dirname(abs), { recursive: true });
-  await fs.writeFile(abs, Buffer.from(await archivo.arrayBuffer()));
-  return relativa;
+  const ruta = `${carpeta}/${Date.now()}-${nombreLimpio(archivo.name)}`;
+  const supabase = await createClient();
+  const { error } = await supabase.storage.from(BUCKET).upload(ruta, archivo, { contentType: archivo.type || undefined });
+  if (error) throw new Error(error.message);
+  return ruta;
 }
 
-export async function borrarArchivo(relativa: string | null | undefined) {
-  const abs = relativa ? rutaSegura(relativa) : null;
-  if (abs) await fs.rm(abs, { force: true });
+/** Enlace temporal para ver un adjunto privado. */
+export async function enlaceArchivo(ruta: string): Promise<string | null> {
+  const supabase = await createClient();
+  const { data } = await supabase.storage.from(BUCKET).createSignedUrl(ruta, 120);
+  return data?.signedUrl ?? null;
 }
 
-export async function borrarCarpeta(relativa: string) {
-  const abs = rutaSegura(relativa);
-  if (abs) await fs.rm(abs, { recursive: true, force: true });
+export async function borrarArchivos(rutas: (string | null | undefined)[]) {
+  const validas = rutas.filter((r): r is string => !!r);
+  if (!validas.length) return;
+  const supabase = await createClient();
+  await supabase.storage.from(BUCKET).remove(validas);
 }

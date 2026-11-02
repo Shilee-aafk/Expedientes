@@ -11,7 +11,7 @@ export default async function PerfilPage() {
     <div className="mx-auto max-w-xl space-y-4">
       <h1 className="text-2xl font-semibold tracking-tight">Mi perfil</h1>
       <PerfilForm perfil={user} />
-      <Equipo usuarios={listarUsuarios()} yoId={user.id} />
+      <Equipo usuarios={await listarUsuarios()} yoId={user.id} />
       <VersionApp />
     </div>
   );

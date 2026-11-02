@@ -16,7 +16,7 @@ export default async function ExpedientesPage({
   await requireUser();
 
   // Se traen todos (el equipo maneja pocos expedientes) para que el panel resumen no dependa del filtro
-  const datos = listarExpedientes();
+  const datos = await listarExpedientes();
   const hoy = hoyChile();
   const todas = datos.map((e) => ({ ...e, r: resumen(e.items, e.duenos.length, hoy) }));
 

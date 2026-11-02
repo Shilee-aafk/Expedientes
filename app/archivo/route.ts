@@ -1,31 +1,17 @@
-import fs from "node:fs/promises";
-import path from "node:path";
 import { NextResponse, type NextRequest } from "next/server";
-import { TIPOS, guardarArchivo, rutaSegura } from "@/lib/archivos";
+import { enlaceArchivo, guardarArchivo } from "@/lib/archivos";
 import { usuarioActual } from "@/lib/sesion";
 
-/** Muestra un documento adjunto (solo con sesión). */
+/** Abre un documento adjunto (privado) mediante un enlace temporal de Supabase Storage. */
 export async function GET(request: NextRequest) {
   if (!(await usuarioActual())) return new NextResponse("Sin sesión", { status: 401 });
-  const relativa = request.nextUrl.searchParams.get("path") ?? "";
-  const abs = rutaSegura(relativa);
-  if (!abs) return new NextResponse("Ruta inválida", { status: 400 });
-  try {
-    const contenido = await fs.readFile(abs);
-    const nombre = path.basename(abs).replace(/^\d+-/, "");
-    return new NextResponse(contenido, {
-      headers: {
-        "Content-Type": TIPOS[path.extname(abs).toLowerCase()] ?? "application/octet-stream",
-        "Content-Disposition": `inline; filename*=UTF-8''${encodeURIComponent(nombre)}`,
-        "Cache-Control": "private, max-age=3600",
-      },
-    });
-  } catch {
-    return new NextResponse("Archivo no encontrado", { status: 404 });
-  }
+  const ruta = request.nextUrl.searchParams.get("path") ?? "";
+  const enlace = ruta ? await enlaceArchivo(ruta) : null;
+  if (!enlace) return new NextResponse("Archivo no encontrado", { status: 404 });
+  return NextResponse.redirect(enlace);
 }
 
-/** Sube un archivo y devuelve su ruta relativa: { path }. */
+/** Sube un archivo y devuelve su ruta: { path }. */
 export async function POST(request: NextRequest) {
   if (!(await usuarioActual())) return NextResponse.json({ error: "Sin sesión" }, { status: 401 });
   const datos = await request.formData();

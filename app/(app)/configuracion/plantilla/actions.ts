@@ -25,24 +25,20 @@ export async function guardarRequisito(id: number | null, f: FormData): Promise<
   await requireUser();
   const datos = leer(f);
   if (!datos.nombre) return "Falta el nombre del requisito.";
-  repo.guardarRequisito(id, datos);
+  await repo.guardarRequisito(id, datos);
   revalidatePath("/configuracion/plantilla");
   return null;
 }
 
 export async function cambiarActivo(id: number, activo: boolean) {
   await requireUser();
-  const r = repo.listarRequisitos().find((x) => x.id === id);
-  if (!r) return;
-  const { id: _id, ...datos } = r;
-  void _id;
-  repo.guardarRequisito(id, { ...datos, activo });
+  await repo.cambiarActivoRequisito(id, activo);
   revalidatePath("/configuracion/plantilla");
 }
 
 /** Los expedientes ya creados conservan su copia del requisito. */
 export async function eliminarRequisito(id: number) {
   await requireUser();
-  repo.eliminarRequisito(id);
+  await repo.eliminarRequisito(id);
   revalidatePath("/configuracion/plantilla");
 }

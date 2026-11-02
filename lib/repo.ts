@@ -1,294 +1,211 @@
 /**
- * Acceso a datos. Funciones puras sobre SQLite (sin Next.js), así se pueden probar directamente.
- * Quien llama ya verificó la sesión y pasa el id del usuario cuando hace falta.
+ * Acceso a datos en Supabase (base compartida). Las reglas de acceso (solo miembros
+ * activos) las aplica la base con RLS; el código, el checklist y el historial los
+ * generan triggers (ver supabase/esquema.sql).
  */
-import { hashClave, nuevoToken, verificarClave } from "./clave";
 import { hoyChile, requiereChecklistCompleto, resumen } from "./checklist";
-import { db, transaccion } from "./db";
+import { createClient } from "./supabase/server";
 import type { Dueno, EstadoExpediente, EstadoItem, Expediente, Item, Profile, Requisito } from "./types";
+import { correoDe } from "./usuarios";
 
-type Fila = Record<string, unknown>;
-const bool = (v: unknown) => v === 1 || v === true;
-const num = (v: boolean | undefined) => (v ? 1 : 0);
+const COLUMNAS_PERFIL = "id, usuario, nombre, rut, carnet_path, titulo_path, activo";
 
-const aItem = (r: Fila) => ({ ...r, opcional: bool(r.opcional), por_dueno: bool(r.por_dueno) }) as unknown as Item;
-const aRequisito = (r: Fila) =>
-  ({ ...r, opcional: bool(r.opcional), por_dueno: bool(r.por_dueno), activo: bool(r.activo) }) as unknown as Requisito;
-const aExpediente = (r: Fila) => ({ ...r }) as unknown as Expediente;
-const aUsuario = (r: Fila) => ({ ...r }) as unknown as Profile;
-
-const COLUMNAS_USUARIO = "id, usuario, nombre, rut, carnet_path, titulo_path";
-
-function registrar(expedienteId: number, usuarioId: number | null, accion: string) {
-  db().prepare("insert into historial (expediente_id, usuario_id, accion) values (?, ?, ?)").run(expedienteId, usuarioId, accion);
+/** Lanza el error de Supabase con un mensaje legible. */
+function revisar<T>(r: { data: T; error: { message: string } | null }): T {
+  if (r.error) throw new Error(r.error.message);
+  return r.data;
 }
 
-/* ─── Usuarios y sesiones ─────────────────────────────────────────── */
-
-export const DURACION_SESION_DIAS = 30;
-
-export function contarUsuarios(): number {
-  return (db().prepare("select count(*) as n from usuarios").get() as { n: number }).n;
+async function idUsuario(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const { data } = await supabase.auth.getClaims();
+  return (data?.claims?.sub as string | undefined) ?? null;
 }
 
-export function listarUsuarios(): Profile[] {
-  return db().prepare(`select ${COLUMNAS_USUARIO} from usuarios order by nombre collate nocase`).all().map(aUsuario);
+/* ─── Usuarios ────────────────────────────────────────────────────── */
+
+export async function hayUsuarios(): Promise<boolean> {
+  const supabase = await createClient();
+  return Boolean(revisar(await supabase.rpc("hay_usuarios")));
 }
 
-export function obtenerUsuario(id: number): Profile | null {
-  const r = db().prepare(`select ${COLUMNAS_USUARIO} from usuarios where id = ?`).get(id);
-  return r ? aUsuario(r) : null;
+export async function estadoBase(): Promise<{ usuarios: number; expedientes: number }> {
+  const supabase = await createClient();
+  return revisar(await supabase.rpc("estado_base")) as { usuarios: number; expedientes: number };
 }
 
-export function crearUsuario(datos: { usuario: string; nombre: string; clave: string }): number {
-  const usuario = datos.usuario.trim();
-  if (!usuario || !datos.nombre.trim()) throw new Error("Falta el usuario o el nombre.");
-  if (datos.clave.length < 6) throw new Error("La contraseña debe tener al menos 6 caracteres.");
-  try {
-    const r = db()
-      .prepare("insert into usuarios (usuario, nombre, hash) values (?, ?, ?)")
-      .run(usuario, datos.nombre.trim(), hashClave(datos.clave));
-    return Number(r.lastInsertRowid);
-  } catch (e) {
-    if (String(e).includes("UNIQUE")) throw new Error("Ya existe un usuario con ese nombre de usuario.");
-    throw e;
-  }
+export async function listarUsuarios(): Promise<Profile[]> {
+  const supabase = await createClient();
+  return revisar(await supabase.from("profiles").select(COLUMNAS_PERFIL).order("nombre")) as Profile[];
+}
+
+export async function crearPrimerUsuario(d: { usuario: string; nombre: string; clave: string }) {
+  const supabase = await createClient();
+  revisar(await supabase.rpc("crear_primer_usuario", { p_usuario: d.usuario, p_nombre: d.nombre, p_clave: d.clave }));
+}
+
+export async function crearUsuario(d: { usuario: string; nombre: string; clave: string }) {
+  const supabase = await createClient();
+  revisar(await supabase.rpc("crear_usuario", { p_usuario: d.usuario, p_nombre: d.nombre, p_clave: d.clave }));
+}
+
+/** Quitar del equipo = desactivar: no puede entrar, pero su nombre sigue en el historial. */
+export async function desactivarUsuario(id: string) {
+  const supabase = await createClient();
+  revisar(await supabase.rpc("desactivar_usuario", { p_id: id }));
+}
+
+export async function reactivarUsuario(id: string) {
+  const supabase = await createClient();
+  revisar(await supabase.rpc("reactivar_usuario", { p_id: id }));
+}
+
+export async function actualizarPerfil(id: string, d: { nombre: string; rut: string | null }) {
+  const supabase = await createClient();
+  revisar(await supabase.from("profiles").update(d).eq("id", id));
+}
+
+export async function guardarDocumentoPerfil(id: string, campo: "carnet_path" | "titulo_path", path: string | null) {
+  const supabase = await createClient();
+  revisar(await supabase.from("profiles").update({ [campo]: path }).eq("id", id));
+}
+
+/** Verifica la contraseña actual y la cambia. */
+export async function cambiarClave(usuario: string, actual: string, nueva: string) {
+  if (nueva.length < 6) throw new Error("La contraseña nueva debe tener al menos 6 caracteres.");
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email: correoDe(usuario), password: actual });
+  if (error) throw new Error("La contraseña actual no es correcta.");
+  const r = await supabase.auth.updateUser({ password: nueva });
+  if (r.error) throw new Error(r.error.message);
 }
 
 /** ¿Algún expediente usa este archivo? (los documentos de perfil se comparten) */
-export function archivoEnUso(path: string): boolean {
-  return !!db().prepare("select 1 from expediente_items where archivo_path = ? limit 1").get(path);
-}
-
-export function eliminarUsuario(id: number) {
-  db().prepare("delete from usuarios where id = ?").run(id);
-}
-
-export function actualizarPerfil(id: number, datos: { nombre: string; rut: string | null }) {
-  db().prepare("update usuarios set nombre = ?, rut = ? where id = ?").run(datos.nombre, datos.rut, id);
-}
-
-export function guardarDocumentoPerfil(id: number, campo: "carnet_path" | "titulo_path", path: string | null) {
-  db().prepare(`update usuarios set ${campo === "carnet_path" ? "carnet_path" : "titulo_path"} = ? where id = ?`).run(path, id);
-}
-
-export function cambiarClave(id: number, actual: string, nueva: string) {
-  const r = db().prepare("select hash from usuarios where id = ?").get(id) as { hash: string } | undefined;
-  if (!r || !verificarClave(actual, r.hash)) throw new Error("La contraseña actual no es correcta.");
-  if (nueva.length < 6) throw new Error("La contraseña nueva debe tener al menos 6 caracteres.");
-  db().prepare("update usuarios set hash = ? where id = ?").run(hashClave(nueva), id);
-}
-
-/** Devuelve el id del usuario si las credenciales son correctas. */
-export function verificarCredenciales(usuario: string, clave: string): number | null {
-  const r = db().prepare("select id, hash from usuarios where usuario = ?").get(usuario.trim()) as
-    | { id: number; hash: string }
-    | undefined;
-  return r && verificarClave(clave, r.hash) ? r.id : null;
-}
-
-export function crearSesion(usuarioId: number): string {
-  const token = nuevoToken();
-  const expira = new Date(Date.now() + DURACION_SESION_DIAS * 86_400_000).toISOString();
-  db().prepare("delete from sesiones where expira < ?").run(new Date().toISOString());
-  db().prepare("insert into sesiones (token, usuario_id, expira) values (?, ?, ?)").run(token, usuarioId, expira);
-  return token;
-}
-
-export function usuarioDeSesion(token: string): Profile | null {
-  const r = db()
-    .prepare(
-      `select u.id, u.usuario, u.nombre, u.rut, u.carnet_path, u.titulo_path
-       from sesiones s join usuarios u on u.id = s.usuario_id
-       where s.token = ? and s.expira > ?`,
-    )
-    .get(token, new Date().toISOString());
-  return r ? aUsuario(r) : null;
-}
-
-export function borrarSesion(token: string) {
-  db().prepare("delete from sesiones where token = ?").run(token);
+export async function archivoEnUso(path: string): Promise<boolean> {
+  const supabase = await createClient();
+  const { count } = await supabase.from("expediente_items").select("id", { count: "exact", head: true }).eq("archivo_path", path);
+  return (count ?? 0) > 0;
 }
 
 /* ─── Plantilla ───────────────────────────────────────────────────── */
 
 export type DatosRequisito = Omit<Requisito, "id">;
 
-export function listarRequisitos(): Requisito[] {
-  return db().prepare("select * from requisitos_plantilla order by orden, id").all().map(aRequisito);
+export async function listarRequisitos(): Promise<Requisito[]> {
+  const supabase = await createClient();
+  return revisar(await supabase.from("requisitos_plantilla").select("*").order("orden").order("id")) as Requisito[];
 }
 
-export function guardarRequisito(id: number | null, d: DatosRequisito) {
-  const valores = [d.orden, d.nombre, d.descripcion, num(d.opcional), d.cantidad, num(d.por_dueno), d.vence_en_dias, d.origen_perfil, num(d.activo)];
-  if (id) {
-    db()
-      .prepare(
-        `update requisitos_plantilla set orden = ?, nombre = ?, descripcion = ?, opcional = ?, cantidad = ?,
-         por_dueno = ?, vence_en_dias = ?, origen_perfil = ?, activo = ? where id = ?`,
-      )
-      .run(...valores, id);
-  } else {
-    db()
-      .prepare(
-        `insert into requisitos_plantilla (orden, nombre, descripcion, opcional, cantidad, por_dueno, vence_en_dias, origen_perfil, activo)
-         values (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .run(...valores);
-  }
+export async function guardarRequisito(id: number | null, d: DatosRequisito) {
+  const supabase = await createClient();
+  if (id) revisar(await supabase.from("requisitos_plantilla").update(d).eq("id", id));
+  else revisar(await supabase.from("requisitos_plantilla").insert(d));
+}
+
+export async function cambiarActivoRequisito(id: number, activo: boolean) {
+  const supabase = await createClient();
+  revisar(await supabase.from("requisitos_plantilla").update({ activo }).eq("id", id));
 }
 
 /** Los expedientes ya creados conservan su copia del requisito. */
-export function eliminarRequisito(id: number) {
-  db().prepare("delete from requisitos_plantilla where id = ?").run(id);
+export async function eliminarRequisito(id: number) {
+  const supabase = await createClient();
+  revisar(await supabase.from("requisitos_plantilla").delete().eq("id", id));
 }
 
 /* ─── Expedientes ─────────────────────────────────────────────────── */
 
 export type FilaListado = Expediente & { items: Item[]; duenos: { nombre: string }[]; profesional: { nombre: string } | null };
 
-export function listarExpedientes(): FilaListado[] {
-  const expedientes = db()
-    .prepare("select e.*, u.nombre as profesional_nombre from expedientes e left join usuarios u on u.id = e.profesional_id order by e.updated_at desc")
-    .all();
-  const items = db().prepare("select * from expediente_items order by orden").all().map(aItem);
-  const duenos = db().prepare("select expediente_id, nombre from duenos order by id").all() as { expediente_id: number; nombre: string }[];
-  return expedientes.map((r) => {
-    const { profesional_nombre, ...e } = r;
-    return {
-      ...aExpediente(e),
-      items: items.filter((i) => i.expediente_id === e.id),
-      duenos: duenos.filter((d) => d.expediente_id === e.id),
-      profesional: profesional_nombre ? { nombre: String(profesional_nombre) } : null,
-    };
-  });
+export async function listarExpedientes(): Promise<FilaListado[]> {
+  const supabase = await createClient();
+  return revisar(
+    await supabase
+      .from("expedientes")
+      .select("*, items:expediente_items(*), duenos(nombre), profesional:profiles!expedientes_profesional_id_fkey(nombre)")
+      .order("updated_at", { ascending: false }),
+  ) as unknown as FilaListado[];
 }
 
 export type HistorialFila = { id: number; accion: string; created_at: string; usuario: { nombre: string } | null };
 
-export function cargarExpediente(id: number) {
-  const e = db().prepare("select * from expedientes where id = ?").get(id);
-  if (!e) return null;
-  const historial = db()
-    .prepare(
-      `select h.id, h.accion, h.created_at, u.nombre as usuario_nombre
-       from historial h left join usuarios u on u.id = h.usuario_id
-       where h.expediente_id = ? order by h.created_at desc, h.id desc limit 50`,
-    )
-    .all(id)
-    .map((h) => ({
-      id: Number(h.id),
-      accion: String(h.accion),
-      created_at: String(h.created_at),
-      usuario: h.usuario_nombre ? { nombre: String(h.usuario_nombre) } : null,
-    }));
+export async function cargarExpediente(id: number) {
+  const supabase = await createClient();
+  const [exp, items, duenos, historial, perfiles] = await Promise.all([
+    supabase.from("expedientes").select("*").eq("id", id).maybeSingle(),
+    supabase.from("expediente_items").select("*").eq("expediente_id", id).order("orden").order("id"),
+    supabase.from("duenos").select("*").eq("expediente_id", id).order("id"),
+    supabase
+      .from("historial")
+      .select("id, accion, created_at, usuario:profiles(nombre)")
+      .eq("expediente_id", id)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(50),
+    supabase.from("profiles").select(COLUMNAS_PERFIL).order("nombre"),
+  ]);
+  const expediente = revisar(exp);
+  if (!expediente) return null;
   return {
-    expediente: aExpediente(e),
-    items: db().prepare("select * from expediente_items where expediente_id = ? order by orden, id").all(id).map(aItem),
-    duenos: db().prepare("select * from duenos where expediente_id = ? order by id").all(id) as unknown as Dueno[],
-    historial: historial as HistorialFila[],
-    perfiles: listarUsuarios(),
+    expediente: expediente as Expediente,
+    items: revisar(items) as Item[],
+    duenos: revisar(duenos) as Dueno[],
+    historial: revisar(historial) as unknown as HistorialFila[],
+    perfiles: revisar(perfiles) as Profile[],
   };
-}
-
-/** Código correlativo por año: EXP-001-2026, EXP-002-2026, … */
-export function siguienteCodigo(anio: number): string {
-  const { ultimo } = db()
-    .prepare("insert into correlativos (anio, ultimo) values (?, 1) on conflict (anio) do update set ultimo = ultimo + 1 returning ultimo")
-    .get(anio) as { ultimo: number };
-  return `EXP-${String(ultimo).padStart(3, "0")}-${anio}`;
 }
 
 export type DatosNuevoExpediente = { predio: string; rol_sii: string | null; comuna: string | null; notas: string | null };
 
-/** Crea el expediente con su código, copia la plantilla al checklist y adjunta los documentos del creador. */
-export function crearExpediente(usuarioId: number, d: DatosNuevoExpediente, duenos: { nombre: string; rut: string | null }[]): number {
-  return transaccion(() => {
-    const codigo = siguienteCodigo(Number(hoyChile().slice(0, 4)));
-    const id = Number(
-      db()
-        .prepare("insert into expedientes (codigo, predio, rol_sii, comuna, notas, profesional_id, created_by) values (?, ?, ?, ?, ?, ?, ?)")
-        .run(codigo, d.predio, d.rol_sii, d.comuna, d.notas, usuarioId, usuarioId).lastInsertRowid,
-    );
-
-    const perfil = obtenerUsuario(usuarioId);
-    const insItem = db().prepare(
-      `insert into expediente_items (expediente_id, requisito_id, orden, nombre, descripcion, opcional, cantidad_requerida,
-       por_dueno, vence_en_dias, estado, cantidad_entregada, archivo_path) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    );
-    for (const r of listarRequisitos().filter((r) => r.activo)) {
-      const doc = r.origen_perfil === "carnet" ? perfil?.carnet_path : r.origen_perfil === "titulo" ? perfil?.titulo_path : null;
-      insItem.run(id, r.id, r.orden, r.nombre, r.descripcion, num(r.opcional), r.cantidad, num(r.por_dueno), r.vence_en_dias,
-        doc ? "listo" : "pendiente", doc ? r.cantidad : 0, doc ?? null);
-    }
-
-    const insDueno = db().prepare("insert into duenos (expediente_id, nombre, rut) values (?, ?, ?)");
-    for (const du of duenos) insDueno.run(id, du.nombre, du.rut);
-
-    registrar(id, usuarioId, "Expediente creado");
-    return id;
-  });
+/** El código, el profesional (quien lo crea) y el checklist los asigna la base. */
+export async function crearExpediente(d: DatosNuevoExpediente, duenos: { nombre: string; rut: string | null }[]): Promise<number> {
+  const supabase = await createClient();
+  const { id } = revisar(await supabase.from("expedientes").insert(d).select("id").single()) as { id: number };
+  if (duenos.length) revisar(await supabase.from("duenos").insert(duenos.map((du) => ({ ...du, expediente_id: id }))));
+  return id;
 }
 
 export type CambioItem = Partial<Pick<Item, "cantidad_entregada" | "fecha_emision" | "comentario" | "archivo_path">> & {
   estado?: EstadoItem;
 };
 
-const CAMPOS_ITEM = ["estado", "cantidad_entregada", "fecha_emision", "comentario", "archivo_path"] as const;
-
-/** Actualiza un requisito del checklist y deja constancia en el historial. */
-export function actualizarItem(usuarioId: number, id: number, cambio: CambioItem): { expedienteId: number; archivoAnterior: string | null } {
-  return transaccion(() => {
-    const antes = db().prepare("select * from expediente_items where id = ?").get(id);
-    if (!antes) throw new Error("El requisito ya no existe.");
-    const campos = CAMPOS_ITEM.filter((c) => c in cambio);
-    const sets = [...campos.map((c) => `${c} = ?`), "actualizado_por = ?", "actualizado_at = ?"].join(", ");
-    db()
-      .prepare(`update expediente_items set ${sets} where id = ?`)
-      .run(...campos.map((c) => cambio[c] ?? null), usuarioId, new Date().toISOString(), id);
-
-    const despues = { ...antes, ...cambio } as Fila;
-    const cambios: string[] = [];
-    if (despues.estado !== antes.estado) cambios.push(`estado: ${antes.estado} → ${despues.estado}`);
-    if (despues.cantidad_entregada !== antes.cantidad_entregada) cambios.push(`cantidad: ${despues.cantidad_entregada}/${antes.cantidad_requerida}`);
-    if ((despues.fecha_emision ?? null) !== antes.fecha_emision) cambios.push(`emisión: ${despues.fecha_emision ?? "—"}`);
-    if ((despues.archivo_path ?? null) !== antes.archivo_path) cambios.push(despues.archivo_path ? "archivo adjuntado" : "archivo quitado");
-    if ((despues.comentario ?? null) !== antes.comentario) cambios.push("comentario editado");
-    const expedienteId = Number(antes.expediente_id);
-    if (cambios.length) registrar(expedienteId, usuarioId, `${antes.nombre} — ${cambios.join(", ")}`);
-    db().prepare("update expedientes set updated_at = ? where id = ?").run(new Date().toISOString(), expedienteId);
-    return { expedienteId, archivoAnterior: (antes.archivo_path as string | null) ?? null };
-  });
+/** Actualiza un requisito del checklist (el historial lo anota la base). */
+export async function actualizarItem(id: number, cambio: CambioItem): Promise<{ expedienteId: number; archivoAnterior: string | null }> {
+  const supabase = await createClient();
+  const antes = revisar(await supabase.from("expediente_items").select("expediente_id, archivo_path").eq("id", id).maybeSingle());
+  if (!antes) throw new Error("El requisito ya no existe.");
+  revisar(
+    await supabase
+      .from("expediente_items")
+      .update({ ...cambio, actualizado_por: await idUsuario(supabase), actualizado_at: new Date().toISOString() })
+      .eq("id", id),
+  );
+  revisar(await supabase.from("expedientes").update({ updated_at: new Date().toISOString() }).eq("id", antes.expediente_id));
+  return { expedienteId: antes.expediente_id, archivoAnterior: antes.archivo_path };
 }
 
 /** Quita un requisito solo de este expediente. Devuelve el archivo que tenía (para borrarlo). */
-export function eliminarItem(usuarioId: number, id: number) {
-  return transaccion(() => {
-    const r = db().prepare("select expediente_id, nombre, archivo_path from expediente_items where id = ?").get(id);
-    if (!r) throw new Error("El requisito ya no existe.");
-    db().prepare("delete from expediente_items where id = ?").run(id);
-    registrar(Number(r.expediente_id), usuarioId, `${r.nombre} — quitado del expediente`);
-    return { expedienteId: Number(r.expediente_id), archivo: (r.archivo_path as string | null) ?? null };
-  });
+export async function eliminarItem(id: number) {
+  const supabase = await createClient();
+  const r = revisar(await supabase.from("expediente_items").delete().eq("id", id).select("expediente_id, archivo_path").maybeSingle());
+  if (!r) throw new Error("El requisito ya no existe.");
+  return { expedienteId: r.expediente_id as number, archivo: (r.archivo_path as string | null) ?? null };
 }
 
 /** Cambia el estado. Devuelve un mensaje de error si faltan requisitos, o null. */
-export function cambiarEstado(usuarioId: number, id: number, estado: EstadoExpediente): string | null {
-  const e = db().prepare("select estado, fecha_envio from expedientes where id = ?").get(id);
-  if (!e) return "El expediente ya no existe.";
+export async function cambiarEstado(id: number, estado: EstadoExpediente): Promise<string | null> {
+  const datos = await cargarExpediente(id);
+  if (!datos) return "El expediente ya no existe.";
   if (requiereChecklistCompleto(estado)) {
-    const { items, duenos } = cargarExpediente(id)!;
-    const r = resumen(items, duenos.length, hoyChile());
+    const r = resumen(datos.items, datos.duenos.length, hoyChile());
     if (!r.listoParaEnviar) {
       return "Faltan requisitos o hay certificados vencidos: " + [...r.pendientes, ...r.vencidos].map((i) => i.nombre).join(", ");
     }
   }
-  if (e.estado === estado) return null;
-  transaccion(() => {
-    const fechaEnvio = estado === "enviado" && !e.fecha_envio ? hoyChile() : e.fecha_envio;
-    db().prepare("update expedientes set estado = ?, fecha_envio = ?, updated_at = ? where id = ?").run(estado, fechaEnvio as string | null, new Date().toISOString(), id);
-    registrar(id, usuarioId, `Estado del expediente: ${e.estado} → ${estado}`);
-  });
-  return null;
+  if (datos.expediente.estado === estado) return null;
+  const supabase = await createClient();
+  const fechaEnvio = estado === "enviado" && !datos.expediente.fecha_envio ? hoyChile() : datos.expediente.fecha_envio;
+  const { error } = await supabase.from("expedientes").update({ estado, fecha_envio: fechaEnvio }).eq("id", id);
+  return error ? error.message : null;
 }
 
 export type DatosExpediente = Pick<
@@ -296,24 +213,25 @@ export type DatosExpediente = Pick<
   "predio" | "rol_sii" | "comuna" | "tercero_autorizado" | "fecha_envio" | "fecha_respuesta" | "observaciones" | "notas"
 >;
 
-export function guardarDatos(id: number, d: DatosExpediente) {
-  db()
-    .prepare(
-      `update expedientes set predio = ?, rol_sii = ?, comuna = ?, tercero_autorizado = ?, fecha_envio = ?,
-       fecha_respuesta = ?, observaciones = ?, notas = ?, updated_at = ? where id = ?`,
-    )
-    .run(d.predio, d.rol_sii, d.comuna, d.tercero_autorizado, d.fecha_envio, d.fecha_respuesta, d.observaciones, d.notas, new Date().toISOString(), id);
+export async function guardarDatos(id: number, d: DatosExpediente) {
+  const supabase = await createClient();
+  revisar(await supabase.from("expedientes").update(d).eq("id", id));
 }
 
-export function agregarDueno(expedienteId: number, nombre: string, rut: string | null) {
-  db().prepare("insert into duenos (expediente_id, nombre, rut) values (?, ?, ?)").run(expedienteId, nombre, rut);
+export async function agregarDueno(expedienteId: number, nombre: string, rut: string | null) {
+  const supabase = await createClient();
+  revisar(await supabase.from("duenos").insert({ expediente_id: expedienteId, nombre, rut }));
 }
 
-export function quitarDueno(duenoId: number) {
-  db().prepare("delete from duenos where id = ?").run(duenoId);
+export async function quitarDueno(duenoId: number) {
+  const supabase = await createClient();
+  revisar(await supabase.from("duenos").delete().eq("id", duenoId));
 }
 
-/** Elimina el expediente con todo lo suyo (el borrado de archivos lo hace quien llama). */
-export function eliminarExpediente(id: number) {
-  db().prepare("delete from expedientes where id = ?").run(id);
+/** Elimina el expediente con todo lo suyo. Devuelve sus archivos propios (para borrarlos). */
+export async function eliminarExpediente(id: number): Promise<string[]> {
+  const supabase = await createClient();
+  const items = revisar(await supabase.from("expediente_items").select("archivo_path").eq("expediente_id", id)) as { archivo_path: string | null }[];
+  revisar(await supabase.from("expedientes").delete().eq("id", id));
+  return items.map((i) => i.archivo_path).filter((p): p is string => !!p && p.startsWith(`expedientes/${id}/`));
 }

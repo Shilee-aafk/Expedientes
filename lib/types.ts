@@ -20,12 +20,13 @@ export const ETIQUETA_ESTADO: Record<EstadoExpediente, string> = {
 export type EstadoItem = "pendiente" | "listo" | "no_aplica";
 
 export type Profile = {
-  id: number;
+  id: string;
   usuario: string;
   nombre: string;
   rut: string | null;
   carnet_path: string | null;
   titulo_path: string | null;
+  activo: boolean;
 };
 
 export type Requisito = {
@@ -67,7 +68,7 @@ export type Expediente = {
   predio: string;
   rol_sii: string | null;
   comuna: string | null;
-  profesional_id: number | null;
+  profesional_id: string | null;
   estado: EstadoExpediente;
   tercero_autorizado: string | null;
   fecha_envio: string | null;

@@ -1,37 +1,44 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { DURACION_SESION_DIAS, borrarSesion, crearSesion, usuarioDeSesion } from "./repo";
+import { createClient } from "./supabase/server";
+import type { Profile } from "./types";
+import { correoDe } from "./usuarios";
 
-export const COOKIE_SESION = "sesion";
+const COLUMNAS_PERFIL = "id, usuario, nombre, rut, carnet_path, titulo_path, activo";
 
-/** Usuario con sesión válida, o redirige al login. Una sola consulta por petición. */
-export const requireUser = cache(async () => {
-  const token = (await cookies()).get(COOKIE_SESION)?.value;
-  const user = token ? usuarioDeSesion(token) : null;
-  if (!user) redirect("/login");
-  return { user };
+/** Perfil del usuario con sesión (o null). Una sola consulta por petición. */
+export const usuarioActual = cache(async (): Promise<Profile | null> => {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const id = data?.claims?.sub;
+  if (!id) return null;
+  const { data: perfil } = await supabase.from("profiles").select(COLUMNAS_PERFIL).eq("id", id).maybeSingle();
+  return perfil && perfil.activo ? (perfil as Profile) : null;
 });
 
-export async function usuarioActual() {
-  const token = (await cookies()).get(COOKIE_SESION)?.value;
-  return token ? usuarioDeSesion(token) : null;
+/** Usuario con sesión válida y activo, o redirige al login. */
+export async function requireUser() {
+  const user = await usuarioActual();
+  if (!user) redirect("/login");
+  return { user };
 }
 
-export async function iniciarSesion(usuarioId: number) {
-  (await cookies()).set(COOKIE_SESION, crearSesion(usuarioId), {
-    httpOnly: true,
-    sameSite: "lax",
-    // En la red local se entra por http; "secure" solo si se publica con https
-    secure: process.env.SESION_SEGURA === "1",
-    path: "/",
-    maxAge: DURACION_SESION_DIAS * 86_400,
-  });
+/** Inicia sesión con usuario y contraseña. Devuelve un mensaje de error, o null. */
+export async function iniciarSesion(usuario: string, clave: string): Promise<string | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithPassword({ email: correoDe(usuario), password: clave });
+  if (error || !data.user) {
+    return /banned|baneado/i.test(error?.message ?? "") ? "Este usuario fue desactivado." : "Usuario o contraseña incorrectos.";
+  }
+  const { data: perfil } = await supabase.from("profiles").select("activo").eq("id", data.user.id).maybeSingle();
+  if (!perfil?.activo) {
+    await supabase.auth.signOut();
+    return "Este usuario fue desactivado.";
+  }
+  return null;
 }
 
 export async function cerrarSesion() {
-  const almacen = await cookies();
-  const token = almacen.get(COOKIE_SESION)?.value;
-  if (token) borrarSesion(token);
-  almacen.delete(COOKIE_SESION);
+  const supabase = await createClient();
+  await supabase.auth.signOut();
 }

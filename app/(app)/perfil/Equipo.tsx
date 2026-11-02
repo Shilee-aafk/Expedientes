@@ -3,11 +3,11 @@
 import { useActionState } from "react";
 import { Confirmar } from "@/components/Confirmar";
 import type { Profile } from "@/lib/types";
-import { crearUsuario, eliminarUsuario } from "./actions";
+import { crearUsuario, desactivarUsuario, reactivarUsuario } from "./actions";
 import { Mensaje } from "./PerfilForm";
 
-/** Usuarios del equipo: cualquiera puede agregar o quitar a otros (no a sí mismo). */
-export function Equipo({ usuarios, yoId }: { usuarios: Profile[]; yoId: number }) {
+/** Usuarios del equipo: cualquiera puede agregar o desactivar a otros (no a sí mismo). Nadie se borra. */
+export function Equipo({ usuarios, yoId }: { usuarios: Profile[]; yoId: string }) {
   const [mensaje, accion, enviando] = useActionState(crearUsuario, null);
 
   return (
@@ -19,20 +19,27 @@ export function Equipo({ usuarios, yoId }: { usuarios: Profile[]; yoId: number }
       <ul className="divide-y divide-border text-sm">
         {usuarios.map((u) => (
           <li key={u.id} className="flex items-center justify-between gap-2 py-2">
-            <span>
+            <span className={u.activo ? "" : "opacity-55"}>
               {u.nombre} <span className="text-muted">· {u.usuario}</span>
               {u.id === yoId && <span className="ml-2 rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand">tú</span>}
+              {!u.activo && <span className="ml-2 rounded-full bg-bg px-2 py-0.5 text-xs text-muted">desactivado</span>}
             </span>
-            {u.id !== yoId && (
-              <Confirmar
-                accion={() => eliminarUsuario(u.id)}
-                titulo="¿Eliminar este usuario?"
-                mensaje={`${u.nombre} ya no podrá entrar. Sus expedientes y cambios en el historial se conservan.`}
-                className="btn-danger px-3 py-1 text-xs"
-              >
-                Eliminar
-              </Confirmar>
-            )}
+            {u.id !== yoId &&
+              (u.activo ? (
+                <Confirmar
+                  accion={() => desactivarUsuario(u.id)}
+                  titulo="¿Desactivar este usuario?"
+                  mensaje={`${u.nombre} ya no podrá entrar. Su cuenta, sus expedientes y su historial se conservan; puedes reactivarlo cuando quieras.`}
+                  textoConfirmar="Desactivar"
+                  className="btn-danger px-3 py-1 text-xs"
+                >
+                  Desactivar
+                </Confirmar>
+              ) : (
+                <button type="button" className="btn-secondary px-3 py-1 text-xs" onClick={() => reactivarUsuario(u.id)}>
+                  Reactivar
+                </button>
+              ))}
           </li>
         ))}
       </ul>

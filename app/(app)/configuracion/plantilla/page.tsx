@@ -4,7 +4,7 @@ import { ListaPlantilla } from "./ListaPlantilla";
 
 export default async function PlantillaPage() {
   await requireUser();
-  const requisitos = listarRequisitos();
+  const requisitos = await listarRequisitos();
   const activos = requisitos.filter((r) => r.activo).length;
 
   return (
