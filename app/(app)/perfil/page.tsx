@@ -1,3 +1,4 @@
+import { VersionApp } from "@/components/Actualizaciones";
 import { listarUsuarios } from "@/lib/repo";
 import { requireUser } from "@/lib/sesion";
 import { Equipo } from "./Equipo";
@@ -11,6 +12,7 @@ export default async function PerfilPage() {
       <h1 className="text-2xl font-semibold tracking-tight">Mi perfil</h1>
       <PerfilForm perfil={user} />
       <Equipo usuarios={listarUsuarios()} yoId={user.id} />
+      <VersionApp />
     </div>
   );
 }

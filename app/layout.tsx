@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { AvisoActualizacion } from "@/components/Actualizaciones";
 import { SCRIPT_TEMA } from "@/lib/tema";
 import "./globals.css";
 
@@ -24,7 +25,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />
       </head>
-      <body className={`${fuente.variable} font-sans antialiased`}>{children}</body>
+      <body className={`${fuente.variable} font-sans antialiased`}>
+        {children}
+        <AvisoActualizacion />
+      </body>
     </html>
   );
 }

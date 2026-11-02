@@ -11,7 +11,9 @@
     "red": "node scripts/iniciar.mjs --red",
     "app:preparar": "node scripts/preparar-app.mjs",
     "app:probar": "npm run build && npm run app:preparar && electron electron",
-    "app:windows": "npm run build && npm run app:preparar && electron-builder --win"
+    "app:windows": "npm run build && npm run app:preparar && electron-builder --win --publish never",
+    "publicar": "node scripts/publicar-version.mjs",
+    "app:carpeta": "npm run build && npm run app:preparar && electron-builder --win dir --publish never -c.win.signAndEditExecutable=false"
   },
   "dependencies": {
     "next": "15.5.28",

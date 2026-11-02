@@ -1,18 +1,18 @@
-# App de escritorio para Windows: instalador .exe (NSIS).
-# Se genera con: npm run app:windows  →  dist-app/
+# App de escritorio para Windows: instalador .exe (NSIS) con actualizaciones automáticas.
+# Lo compila y publica GitHub Actions (.github/workflows/publicar-app.yml) al subir una etiqueta vX.Y.Z.
 appId: cl.spproyectos.expedientes
 productName: Expedientes SPR
 electronVersion: 45.1.0
 directories:
-  app: electron          # solo el proceso principal; el servidor va como recurso aparte
+  app: electron          # proceso principal + electron-updater; el servidor va como recurso aparte
   output: dist-app
   buildResources: electron
 files:
   - main.cjs
+  - preload.cjs
   - icono.png
   - package.json
-  - "!**/node_modules/**"
-# La app no tiene dependencias propias: no reconstruir ni buscar módulos nativos
+# Sin módulos nativos: no reconstruir nada
 npmRebuild: false
 nodeGypRebuild: false
 buildDependenciesFromSource: false
@@ -31,16 +31,9 @@ electronLanguages: [es, es-419, en-US]
 compression: maximum
 win:
   target:
-    # Un solo .exe que se abre con doble clic, sin instalar (ideal para enviar)
-    - target: portable
+    - target: nsis
       arch: [x64]
   icon: electron/icono.ico
-  # Sin Wine no se puede editar el .exe interno (ícono/versión); el .exe portable sí lleva ícono
-  signAndEditExecutable: false
-portable:
-  artifactName: "Expedientes-SPR-${version}.exe"
-  # Mensaje mientras se descomprime al abrir
-  unpackDirName: ExpedientesSPR
 nsis:
   oneClick: false
   perMachine: false
@@ -52,8 +45,14 @@ nsis:
   installerIcon: electron/icono.ico
   uninstallerIcon: electron/icono.ico
   installerHeaderIcon: electron/icono.ico
-  differentialPackage: false
   installerLanguages: [es_ES]
   language: "3082"
   # Al desinstalar NO se borran los datos (%APPDATA%\Expedientes SPR)
   deleteAppDataOnUninstall: false
+# Las versiones se publican en un repositorio PÚBLICO solo con instaladores (el del código es privado):
+# la app descarga de ahí sin necesitar ninguna clave.
+publish:
+  provider: github
+  owner: Shilee-aafk
+  repo: Expedientes-releases
+  releaseType: release

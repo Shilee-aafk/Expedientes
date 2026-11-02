@@ -36,18 +36,29 @@ Todo queda en la carpeta `datos/` del proyecto:
 
 **Respaldar = copiar la carpeta `datos/`** (con la app detenida, o copiando también los archivos `-wal` y `-shm`). Para usar otra ubicación, define la variable `DATOS_DIR`.
 
-## App de escritorio para Windows (.exe)
+## App de escritorio para Windows (.exe) y actualizaciones
 
+La app de escritorio se distribuye con un **instalador** (`Expedientes-SPR-Instalador-X.Y.Z.exe`). Una vez instalada, **se actualiza sola**: al abrir (y cada 4 horas) busca una versión nueva, la descarga en segundo plano y avisa "Nueva versión lista — Reiniciar y actualizar". Si el usuario elige "Más tarde", se instala al cerrar la app. En *Mi perfil → Aplicación* se ve la versión y se puede buscar manualmente.
+
+- Los datos quedan en `%APPDATA%\Expedientes SPR\datos` (base y adjuntos) y **no se tocan** al actualizar ni al desinstalar. Respaldar = copiar esa carpeta.
+- Windows SmartScreen puede advertir que la app "no es reconocida" porque no está firmada: *Más información → Ejecutar de todas formas*.
+
+### Configuración inicial (una sola vez)
+1. Crear en GitHub el repositorio **público** `Shilee-aafk/Expedientes-releases` (vacío, sin código: solo guarda los instaladores; el del código sigue privado).
+2. Crear un token *fine-grained* en GitHub (*Settings → Developer settings → Personal access tokens*) con acceso solo a `Expedientes-releases` y permiso **Contents: Read and write**.
+3. En el repositorio del código: *Settings → Secrets and variables → Actions → New repository secret*, nombre `RELEASES_TOKEN`, valor: el token.
+
+### Publicar una versión nueva
 ```bash
-npm run app:windows
+npm run publicar -- 0.2.0
+git push --follow-tags
 ```
+GitHub Actions (`.github/workflows/publicar-app.yml`) corre las pruebas, compila el instalador en Windows y lo publica en `Expedientes-releases`. Las apps instaladas lo detectan solas. El instalador de cada versión queda en la página *Releases* de ese repositorio, para instalar en PCs nuevos.
 
-Genera `dist-app/Expedientes-SPR-<versión>.exe` (~107 MB): un solo archivo **portable** que se abre con doble clic, sin instalar. Por dentro levanta el servidor y muestra la app en su propia ventana.
-
-- Los datos de la app de escritorio quedan en `%APPDATA%\Expedientes SPR\datos` (base y adjuntos), separados de la carpeta del proyecto. Respaldar = copiar esa carpeta.
-- Cada computador que use el `.exe` tiene sus propios datos.
-- Windows SmartScreen puede advertir que la app "no es reconocida" porque no está firmada digitalmente: *Más información → Ejecutar de todas formas*.
-- Para probar la ventana de escritorio en el propio equipo de desarrollo: `npm run app:probar`.
+### Compilar localmente
+- `npm run app:carpeta`: la app sin instalador en `dist-app/win-unpacked/` (para revisar el contenido).
+- `npm run app:probar`: abre la ventana de escritorio en el equipo de desarrollo.
+- El instalador completo se genera en GitHub (en Linux necesitaría Wine).
 
 ## Red local (más adelante)
 Para que otros computadores de la oficina entren:

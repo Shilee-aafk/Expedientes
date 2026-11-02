@@ -1,6 +1,6 @@
 // App de escritorio: levanta el servidor de Next (standalone) en segundo plano
 // y lo muestra en una ventana propia. Los datos quedan en la carpeta del usuario.
-const { app, BrowserWindow, shell, dialog } = require("electron");
+const { app, BrowserWindow, shell, dialog, ipcMain } = require("electron");
 const { spawn } = require("node:child_process");
 const fs = require("node:fs");
 const net = require("node:net");
@@ -103,7 +103,7 @@ if (!app.requestSingleInstanceLock()) {
       autoHideMenuBar: true,
       show: false,
       icon: path.join(__dirname, "icono.png"),
-      webPreferences: { contextIsolation: true, sandbox: true },
+      webPreferences: { contextIsolation: true, sandbox: true, preload: path.join(__dirname, "preload.cjs") },
     });
     ventana.removeMenu();
     ventana.once("ready-to-show", () => ventana.show());
@@ -141,10 +141,63 @@ if (!app.requestSingleInstanceLock()) {
 
   app.on("window-all-closed", () => app.quit());
 
+  /* ─── Actualizaciones (GitHub Releases, ver "publish" en electron-builder.yml) ───
+     Al abrir y cada 4 horas busca una versión nueva y la descarga en segundo plano;
+     la interfaz avisa y el usuario decide cuándo reiniciar. Si no lo hace, se
+     instala sola al cerrar la app. */
+  let estadoActualizacion = { estado: "inactivo" };
+  ipcMain.handle("app:version", () => app.getVersion());
+  ipcMain.handle("actualizacion:estado", () => estadoActualizacion);
+
+  function configurarActualizaciones() {
+    let autoUpdater = null;
+    if (app.isPackaged) {
+      try {
+        ({ autoUpdater } = require("electron-updater"));
+      } catch {
+        autoUpdater = null;
+      }
+    }
+    const enviar = (estado) => {
+      estadoActualizacion = estado;
+      for (const v of BrowserWindow.getAllWindows()) v.webContents.send("actualizacion", estado);
+    };
+    if (!autoUpdater) {
+      ipcMain.handle("actualizacion:buscar", () => enviar({ estado: "no-disponible" }));
+      ipcMain.handle("actualizacion:instalar", () => {});
+      return;
+    }
+    const registro = fs.createWriteStream(path.join(app.getPath("userData"), "actualizaciones.log"), { flags: "a" });
+    const anotar = (nivel) => (...m) => registro.write(`${new Date().toISOString()} ${nivel} ${m.join(" ")}\n`);
+    autoUpdater.logger = { info: anotar("INFO"), warn: anotar("WARN"), error: anotar("ERROR"), debug: () => {} };
+    autoUpdater.autoDownload = true;
+    autoUpdater.autoInstallOnAppQuit = true;
+
+    autoUpdater.on("checking-for-update", () => enviar({ estado: "buscando" }));
+    autoUpdater.on("update-not-available", () => enviar({ estado: "al-dia" }));
+    autoUpdater.on("update-available", (info) => enviar({ estado: "descargando", version: info.version, porcentaje: 0 }));
+    autoUpdater.on("download-progress", (p) =>
+      enviar({ estado: "descargando", version: estadoActualizacion.version, porcentaje: Math.round(p.percent) }),
+    );
+    autoUpdater.on("update-downloaded", (info) => enviar({ estado: "lista", version: info.version }));
+    autoUpdater.on("error", (e) => enviar({ estado: "error", mensaje: String(e?.message ?? e).split("\n")[0] }));
+
+    const buscar = () => autoUpdater.checkForUpdates().catch(() => {});
+    ipcMain.handle("actualizacion:buscar", buscar);
+    ipcMain.handle("actualizacion:instalar", () => {
+      // Detiene el servidor interno antes de que el instalador reemplace sus archivos
+      detenerServidor();
+      autoUpdater.quitAndInstall(false, true);
+    });
+    setTimeout(buscar, 5000);
+    setInterval(buscar, 4 * 60 * 60 * 1000);
+  }
+
   app.whenReady().then(async () => {
     try {
       puertoServidor = await iniciarServidor();
       crearVentana();
+      configurarActualizaciones();
     } catch (e) {
       dialog.showErrorBox(NOMBRE, `No se pudo iniciar la aplicación.\n\n${e.message}`);
       app.quit();
