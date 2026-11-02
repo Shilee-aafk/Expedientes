@@ -17,11 +17,11 @@ Stack: Next.js 15 + Tailwind 4 + Supabase (Auth, Postgres con RLS, Storage) + El
 ## Configurar Supabase (una sola vez)
 1. En Supabase → **SQL Editor**, ejecutar completo `supabase/esquema.sql`. Crea las tablas, las reglas de acceso, el historial automático y el bucket `documentos`. Se puede ejecutar más de una vez y **no borra datos** (si hay tablas de la primera versión, las adapta).
 2. Recomendado: en **Authentication → Sign In / Providers**, desactivar *Allow new users to sign up* (los usuarios se crean desde la app).
-3. En GitHub (repositorio `Expedientes`) → **Settings → Secrets and variables → Actions → Variables**, crear:
+3. En GitHub (repositorio `Expedientes`) → **Settings → Environments → production → Environment secrets**, crear:
    - `SUPABASE_URL` = la *Project URL* (Supabase → Project Settings → API)
    - `SUPABASE_ANON_KEY` = la clave *anon public*
 
-   Son datos públicos por diseño (la seguridad la dan las reglas de la base); los usa GitHub para compilar el instalador.
+   Los usa GitHub para compilar el instalador (también se aceptan como variables del repositorio).
 
 La primera persona que abra la app crea el **usuario administrador**; después, desde *Mi perfil → Equipo*, se agregan los demás.
 
