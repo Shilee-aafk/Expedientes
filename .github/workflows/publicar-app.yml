@@ -32,7 +32,7 @@ jobs:
         run: |
           VERSION=$(node -p "require('./electron/package.json').version")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          if gh release view "v$VERSION" > /dev/null 2>&1; then
+          if [ "$(gh release view "v$VERSION" --json isDraft -q .isDraft 2>/dev/null)" = "false" ]; then
             echo "La versión v$VERSION ya está publicada: nada que hacer."
             echo "publicar=no" >> "$GITHUB_OUTPUT"
           else
@@ -74,6 +74,20 @@ jobs:
             git push origin "$TAG"
           fi
 
-      - name: Crear instalador y publicarlo
+      # La Release se crea antes, como borrador: si la creara electron-builder, sus
+      # publicadores en paralelo pueden crear dos Releases con la misma etiqueta.
+      - name: Preparar la Release (borrador)
+        if: steps.version.outputs.publicar == 'si'
+        shell: bash
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          gh release view "$TAG" > /dev/null 2>&1 || gh release create "$TAG" --draft --title "${{ steps.version.outputs.version }}" --notes "Versión ${{ steps.version.outputs.version }}"
+
+      - name: Crear instalador y subirlo
         if: steps.version.outputs.publicar == 'si'
         run: npx electron-builder --win --publish always
+
+      - name: Publicar la Release
+        if: steps.version.outputs.publicar == 'si'
+        shell: bash
+        run: gh release edit "v${{ steps.version.outputs.version }}" --draft=false --latest

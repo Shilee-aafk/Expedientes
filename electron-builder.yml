@@ -55,4 +55,5 @@ publish:
   provider: github
   owner: Shilee-aafk
   repo: Expedientes
-  releaseType: release
+  # El workflow crea la Release como borrador y la publica cuando están todos los archivos
+  releaseType: draft
