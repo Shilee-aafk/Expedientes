@@ -13,7 +13,11 @@ beforeAll(async () => {
   repo = await import("./repo");
   ana = repo.crearUsuario({ usuario: "ana", nombre: "Ana Pérez", clave: "secreta1" });
 });
-afterAll(() => fs.rmSync(dir, { recursive: true, force: true }));
+afterAll(async () => {
+  // Cerrar la base antes de borrarla: Windows no permite borrar un archivo abierto
+  (await import("./db")).cerrarDb();
+  fs.rmSync(dir, { recursive: true, force: true });
+});
 
 const anio = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago" }).format(new Date()).slice(0, 4);
 

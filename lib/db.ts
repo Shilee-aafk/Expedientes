@@ -147,6 +147,12 @@ export function db(): DatabaseSync {
   return global_.__db;
 }
 
+/** Cierra la conexión (en Windows el archivo no se puede borrar mientras esté abierto). */
+export function cerrarDb() {
+  global_.__db?.close();
+  global_.__db = undefined;
+}
+
 /** Ejecuta fn dentro de una transacción (todo o nada). */
 export function transaccion<T>(fn: () => T): T {
   const conexion = db();
