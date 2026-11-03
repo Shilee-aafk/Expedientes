@@ -10,6 +10,7 @@ directories:
 files:
   - main.cjs
   - preload.cjs
+  - plugin.cjs
   - icono.png
   - package.json
 # Sin módulos nativos: no reconstruir nada
@@ -25,6 +26,9 @@ extraResources:
       - "standalone/**/*"
       - "standalone/node_modules/**/*"
       - "!standalone/datos/**"
+  # Plugin de AutoCAD / Civil 3D (lo arma scripts/preparar-plugin.mjs)
+  - from: plugin/dist/ExpedientesSPR.bundle
+    to: plugin/ExpedientesSPR.bundle
 asar: true
 # Tamaño: solo español e inglés (Electron trae ~55 idiomas) y compresión máxima
 electronLanguages: [es, es-419, en-US]

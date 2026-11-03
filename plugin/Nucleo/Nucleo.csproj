@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Lógica sin AutoCAD: datos de Supabase y diseño de la viñeta. El plugin compila estos mismos archivos. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>ExpedientesSPR.Nucleo</RootNamespace>
+    <AssemblyName>ExpedientesSPR.Nucleo</AssemblyName>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+</Project>

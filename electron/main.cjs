@@ -147,6 +147,16 @@ if (!app.requestSingleInstanceLock()) {
      instala sola al cerrar la app. */
   let estadoActualizacion = { estado: "inactivo" };
   ipcMain.handle("app:version", () => app.getVersion());
+
+  /* ─── Plugin de AutoCAD / Civil 3D (electron/plugin.cjs) ─── */
+  const plugin = require("./plugin.cjs");
+  ipcMain.handle("plugin:estado", () => plugin.estado(app));
+  ipcMain.handle("plugin:instalar", (_e, config) => plugin.instalar(app, config));
+  app.whenReady().then(() =>
+    plugin.actualizarSiCorresponde(app, (m) =>
+      fs.appendFile(path.join(app.getPath("userData"), "plugin.log"), `${new Date().toISOString()} ${m}\n`, () => {}),
+    ),
+  );
   ipcMain.handle("actualizacion:estado", () => estadoActualizacion);
 
   function configurarActualizaciones() {

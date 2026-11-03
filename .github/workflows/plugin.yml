@@ -1,0 +1,27 @@
+# Pruebas y compilación del plugin de AutoCAD / Civil 3D en cada cambio.
+name: Plugin AutoCAD
+
+on:
+  push:
+    paths:
+      - plugin/**
+      - scripts/preparar-plugin.mjs
+      - .github/workflows/plugin.yml
+  workflow_dispatch:
+
+jobs:
+  plugin:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Pruebas
+        run: dotnet test plugin/Pruebas --nologo
+      - name: Compilar (AutoCAD 2021-2024 y 2025-2026)
+        run: node scripts/preparar-plugin.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ExpedientesSPR.bundle
+          path: plugin/dist/ExpedientesSPR.bundle

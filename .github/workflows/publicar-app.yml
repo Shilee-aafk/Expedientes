@@ -50,6 +50,11 @@ jobs:
             package-lock.json
             electron/package-lock.json
 
+      - uses: actions/setup-dotnet@v4
+        if: steps.version.outputs.publicar == 'si'
+        with:
+          dotnet-version: 8.0.x
+
       - name: Instalar dependencias
         if: steps.version.outputs.publicar == 'si'
         run: |
@@ -58,7 +63,9 @@ jobs:
 
       - name: Pruebas
         if: steps.version.outputs.publicar == 'si'
-        run: npm test
+        run: |
+          npm test
+          dotnet test plugin/Pruebas --nologo
 
       - name: Compilar
         if: steps.version.outputs.publicar == 'si'
@@ -73,6 +80,7 @@ jobs:
           fi
           npm run build
           npm run app:preparar
+          node scripts/preparar-plugin.mjs
 
       - name: Etiquetar la versión
         if: steps.version.outputs.publicar == 'si'

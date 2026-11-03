@@ -45,6 +45,19 @@ git push
 ```
 Al detectar la versión nueva, GitHub Actions (`.github/workflows/publicar-app.yml`) corre las pruebas, crea la etiqueta, compila el instalador en Windows (con las variables de Supabase) y lo publica como *Release*. El repositorio debe ser **público** para que las apps descarguen las actualizaciones sin clave.
 
+## Plugin para AutoCAD y Civil 3D
+Dibuja la viñeta del plano de subdivisión con los datos del expediente (predio, rol, región, inscripción de dominio, propietarios con "por poder", profesional, lámina, logo SP y sello). Funciona en **AutoCAD y Civil 3D 2021–2026**: usa solo la API de AutoCAD y se compila dos veces (`net48` para 2021–2024 y `net8.0-windows` para 2025–2026).
+
+- Se instala desde la app: *Mi perfil → Plugin para AutoCAD / Civil 3D → Instalar*. Queda en `%APPDATA%\Autodesk\ApplicationPlugins\ExpedientesSPR.bundle` y AutoCAD lo carga solo. La app lo actualiza al abrirse cuando trae una versión nueva.
+- Comandos: `SPR_INGRESAR` (usuario y contraseña de la app), `SPR_EXPEDIENTE` (asocia el dibujo a un expediente), `SPR_VINETA` (inserta o actualiza la viñeta; en un layout va en mm, en el modelo a la escala del plano) y `SPR_SALIR`.
+- Los datos de la viñeta se completan en el expediente (sección *Datos para el plano*) y en *Mi perfil* (profesión y RUT). Lo que falte queda en blanco y el comando avisa.
+- Código: `plugin/Nucleo` (Supabase y diseño de la viñeta, sin AutoCAD, con pruebas en `plugin/Pruebas`) y `plugin/Plugin` (comandos). `node scripts/preparar-plugin.mjs` arma el bundle en `plugin/dist`.
+
+```bash
+dotnet test plugin/Pruebas
+node scripts/preparar-plugin.mjs
+```
+
 ## Desarrollo
 ```bash
 cp .env.example .env.local   # URL y clave anon de Supabase

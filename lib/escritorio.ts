@@ -5,12 +5,17 @@ export type EstadoActualizacion =
   | { estado: "lista"; version: string }
   | { estado: "error"; mensaje: string };
 
+/** Plugin de AutoCAD / Civil 3D: versión que trae la app y la instalada (null si no está). */
+export type EstadoPlugin = { disponible: boolean; version: string | null; instalada: string | null };
+
 /** API que expone electron/preload.cjs. Solo existe dentro de la app de escritorio. */
 export type ApiEscritorio = {
   version: () => Promise<string>;
   estadoActualizacion: () => Promise<EstadoActualizacion>;
   buscarActualizacion: () => Promise<void>;
   instalarActualizacion: () => Promise<void>;
+  estadoPlugin: () => Promise<EstadoPlugin>;
+  instalarPlugin: (config: { url: string; anonKey: string }) => Promise<EstadoPlugin>;
   alCambiarActualizacion: (fn: (estado: EstadoActualizacion) => void) => () => void;
 };
 

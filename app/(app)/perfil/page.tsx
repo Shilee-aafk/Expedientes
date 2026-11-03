@@ -1,4 +1,6 @@
 import { VersionApp } from "@/components/Actualizaciones";
+import { PluginAutocad } from "@/components/PluginAutocad";
+import { configSupabase } from "@/lib/supabase/server";
 import { listarUsuarios } from "@/lib/repo";
 import { requireUser } from "@/lib/sesion";
 import { Equipo } from "./Equipo";
@@ -13,6 +15,7 @@ export default async function PerfilPage() {
       <PerfilForm perfil={user} />
       <Equipo usuarios={await listarUsuarios()} yoId={user.id} />
       <VersionApp />
+      <PluginAutocad url={configSupabase().url} anonKey={configSupabase().clave} />
     </div>
   );
 }
