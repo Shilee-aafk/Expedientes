@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BarraLateral } from "./BarraLateral";
 import { BotonTema } from "./BotonTema";
 import { EtiquetaBarra } from "./EtiquetaBarra";
 import { IconoSalir } from "./Iconos";
@@ -11,7 +12,7 @@ import { MenuPrincipal } from "./MenuPrincipal";
 export function Header() {
   return (
     <header className="no-print pointer-events-none fixed inset-y-0 left-3 z-50 flex flex-col items-start justify-center gap-2">
-      <div className="barra flotar-entrada-lado pointer-events-auto flex flex-col items-center gap-1 rounded-full p-1.5">
+      <BarraLateral className="flotar-entrada-lado pointer-events-auto flex flex-col items-center gap-1 rounded-full p-1.5">
         <Link href="/expedientes" aria-label="Expedientes SPR, inicio" className="group relative flex h-10 w-10 shrink-0 items-center justify-center">
           <EtiquetaBarra texto="Expedientes SPR" />
           <span className="liquido relative flex h-8 w-8 items-center justify-center rounded-full text-on-oro transition-transform duration-500 ease-[var(--ease-spring)] group-hover:rotate-[-8deg] group-hover:scale-110">
@@ -26,8 +27,9 @@ export function Header() {
         <MenuPrincipal />
         <span aria-hidden className="my-0.5 h-px w-6 bg-border" />
         <BotonTema />
-      </div>
-      <form action="/auth/salir" method="post" className="barra flotar-entrada-lado pointer-events-auto shrink-0 rounded-full p-1.5" style={{ animationDelay: "80ms" }}>
+      </BarraLateral>
+      <BarraLateral className="flotar-entrada-lado pointer-events-auto shrink-0 rounded-full p-1.5" style={{ animationDelay: "80ms" }}>
+        <form action="/auth/salir" method="post">
         <button
           className="group relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:text-danger active:scale-95"
           aria-label="Cerrar sesión"
@@ -35,7 +37,8 @@ export function Header() {
           <EtiquetaBarra texto="Cerrar sesión" />
           <IconoSalir className="relative h-5 w-5" />
         </button>
-      </form>
+        </form>
+      </BarraLateral>
     </header>
   );
 }

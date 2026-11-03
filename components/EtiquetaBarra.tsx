@@ -8,6 +8,7 @@ export function EtiquetaBarra({ texto }: { texto: string }) {
     <span aria-hidden className="etiqueta-barra pointer-events-none absolute top-1/2 left-10 flex h-9 -translate-y-1/2 items-center whitespace-nowrap">
       <span className="etiqueta-forma absolute inset-0">
         <span className="etiqueta-fondo" />
+        <span className="etiqueta-borde" />
         <span className="etiqueta-union arriba" />
         <span className="etiqueta-union abajo" />
       </span>
