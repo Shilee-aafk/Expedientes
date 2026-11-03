@@ -396,7 +396,8 @@ begin
   perform set_config('expedientes.importando', 'on', true);
 
   -- La plantilla local reemplaza a la de Supabase (sin expedientes, nada la usa)
-  delete from public.requisitos_plantilla;
+  -- («where true»: Supabase rechaza DELETE sin WHERE en llamadas desde la app)
+  delete from public.requisitos_plantilla where true;
   insert into public.requisitos_plantilla overriding system value
     select * from public._filas(null::public.requisitos_plantilla, p -> 'requisitos',
       jsonb_build_object('created_at', now(), 'activo', true, 'opcional', false, 'por_dueno', false, 'cantidad', 1, 'orden', 0));
