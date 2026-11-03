@@ -98,6 +98,8 @@ export type Expediente = {
   acceso_norte: number | null;
   acceso_este: number | null;
   huso: string | null;
+  /** Último cambio de estado (para los plazos) */
+  estado_desde?: string | null;
   created_at: string;
   updated_at: string;
 };

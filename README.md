@@ -10,6 +10,9 @@ App para controlar el checklist de los expedientes de **subdivisión de predios 
 - Archivos adjuntos por requisito (PDF, imágenes, KMZ) en Supabase Storage.
 - El carnet y el título del profesional se cargan una vez en *Mi perfil* y se adjuntan solos en los expedientes que crea.
 - Seguimiento del envío, historial de cambios con autor y carátula imprimible.
+- Panel **Requiere atención**: certificados vencidos o por vencer y expedientes detenidos (enviado sin respuesta 30 días, en observación 10, listo sin enviar 7, sin avances 30; ver `lib/plazos.ts`). En la app de escritorio, además, una notificación al día.
+- Mapa del KMZ/KML adjunto (satélite o calles) con la superficie y el perímetro de cada polígono.
+- Visita automática a Supabase cada 3 días (`.github/workflows/mantener-supabase.yml`) para que el plan gratis no pause el proyecto.
 - Usuarios con nombre de usuario y contraseña (cuentas de Supabase). Quitar a alguien del equipo lo **desactiva**: nunca se borra, y su nombre sigue en el historial.
 
 Stack: Next.js 15 + Tailwind 4 + Supabase (Auth, Postgres con RLS, Storage) + Electron para la app de Windows.

@@ -4,6 +4,7 @@ import { EstadoBadge, Progreso } from "@/components/ui";
 import { hoyChile, resumen } from "@/lib/checklist";
 import { cargarExpediente } from "@/lib/datos";
 import { formatoFechaHora } from "@/lib/formato";
+import { plazo } from "@/lib/plazos";
 import { Checklist } from "./Checklist";
 import { DatosForm } from "./DatosForm";
 import { Duenos } from "./Duenos";
@@ -14,6 +15,7 @@ export default async function ExpedientePage({ params }: { params: Promise<{ id:
   const { expediente, items, duenos, historial } = await cargarExpediente(id);
   const hoy = hoyChile();
   const r = resumen(items, duenos.length, hoy);
+  const p = plazo(expediente, hoy);
   // El KMZ/KML adjunto (normalmente en "Pendrive con KMZ") se muestra en el mapa
   const kmz = items.find((i) => i.archivo_path && /\.(kmz|kml)$/i.test(i.archivo_path))?.archivo_path ?? null;
 
@@ -31,6 +33,10 @@ export default async function ExpedientePage({ params }: { params: Promise<{ id:
             <span className="rounded-full bg-brand-soft px-2.5 py-0.5 font-mono text-xs font-semibold tracking-wide text-brand">{expediente.codigo}</span>
             {expediente.comuna && ` · ${expediente.comuna}`}
             {expediente.rol_sii && ` · Rol ${expediente.rol_sii}`}
+            <span className={p.detenido ? "rounded-full bg-warn-soft px-2.5 py-0.5 text-xs text-warn" : "text-sm"}>
+              · {p.texto}
+              {p.detenido && ` — ${p.detenido.replace(/ \(\d+ días\)$/, "")}`}
+            </span>
           </p>
         </div>
         <Link href={`/expedientes/${id}/caratula`} className="btn-secondary">

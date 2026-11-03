@@ -123,6 +123,16 @@ alter table public.duenos
   add column if not exists apoderado_rut text;
 alter table public.profiles add column if not exists profesion text;
 
+-- ─── Plazos: desde cuándo está el expediente en su estado actual ─────
+alter table public.expedientes add column if not exists estado_desde timestamptz;
+-- Expedientes que ya existían: el último cambio de estado del historial (o su última modificación)
+update public.expedientes e set estado_desde = coalesce(
+  (select max(h.created_at) from public.historial h
+    where h.expediente_id = e.id and h.accion like 'Estado del expediente:%'),
+  e.created_at)
+where e.estado_desde is null;
+alter table public.expedientes alter column estado_desde set default now();
+
 -- La primera versión usaba "generated always": se pasa a "by default" para poder
 -- importar los datos locales conservando sus números (y las rutas de sus archivos)
 do $$
@@ -371,6 +381,7 @@ create or replace function public.registrar_cambio_expediente()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
   new.updated_at := now();
+  if new.estado is distinct from old.estado then new.estado_desde := now(); end if;
   if new.estado is distinct from old.estado and not public._importando() then
     insert into public.historial (expediente_id, usuario_id, accion)
     values (new.id, auth.uid(), format('Estado del expediente: %s → %s', old.estado, new.estado));
@@ -436,6 +447,12 @@ begin
   on conflict (anio) do update set ultimo = greatest(correlativos.ultimo, excluded.ultimo);
   update public.profiles pr set rut = x.rut, carnet_path = x.carnet_path, titulo_path = x.titulo_path, created_at = coalesce(x.created_at, pr.created_at)
     from jsonb_populate_recordset(null::public.profiles, p -> 'perfiles') x where pr.id = x.id;
+
+  update public.expedientes e set estado_desde = coalesce(
+    (select max(h.created_at) from public.historial h
+      where h.expediente_id = e.id and h.accion like 'Estado del expediente:%'),
+    e.created_at)
+  where e.estado_desde is null;
 
   -- Los próximos registros siguen después de los importados
   foreach t in array array['requisitos_plantilla', 'expedientes', 'duenos', 'expediente_items', 'historial'] loop
