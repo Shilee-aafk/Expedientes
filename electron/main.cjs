@@ -158,6 +158,15 @@ if (!app.requestSingleInstanceLock()) {
     ),
   );
   ipcMain.handle("actualizacion:estado", () => estadoActualizacion);
+  // Instalada "para todos los usuarios" (en Archivos de programa): cada actualización pide
+  // permiso de administrador. Instalada "solo para mí" se actualiza sin preguntar.
+  ipcMain.handle("app:instalacion", () => {
+    const exe = app.getPath("exe").toLowerCase();
+    const carpetas = [process.env.ProgramFiles, process.env["ProgramFiles(x86)"], process.env.ProgramW6432]
+      .filter(Boolean)
+      .map((c) => c.toLowerCase());
+    return { paraTodos: app.isPackaged && carpetas.some((c) => exe.startsWith(c + path.sep)) };
+  });
 
   function configurarActualizaciones() {
     let autoUpdater = null;
@@ -197,7 +206,8 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle("actualizacion:instalar", () => {
       // Detiene el servidor interno antes de que el instalador reemplace sus archivos
       detenerServidor();
-      autoUpdater.quitAndInstall(false, true);
+      // Silenciosa (sin el asistente de instalación) y vuelve a abrir la app al terminar
+      autoUpdater.quitAndInstall(true, true);
     });
     setTimeout(buscar, 5000);
     setInterval(buscar, 4 * 60 * 60 * 1000);

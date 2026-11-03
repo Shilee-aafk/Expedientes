@@ -72,8 +72,10 @@ const TEXTO: Record<EstadoActualizacion["estado"], string> = {
 export function VersionApp() {
   const estado = useActualizacion();
   const [version, setVersion] = useState<string | null>(null);
+  const [paraTodos, setParaTodos] = useState(false);
   useEffect(() => {
     apiEscritorio()?.version().then(setVersion);
+    apiEscritorio()?.instalacion?.().then((i) => setParaTodos(i.paraTodos));
   }, []);
   if (!version) return null;
 
@@ -104,7 +106,14 @@ export function VersionApp() {
           {texto}
         </p>
       )}
-      {estado?.estado === "descargando" && (
+      {paraTodos && (
+        <p className="rounded-xl bg-warn-soft p-3 text-sm text-warn">
+          La app está instalada «para todos los usuarios», por eso Windows pide permiso en cada actualización. Para que se
+          actualice sola: desinstálala (tus datos están en Supabase y no se pierden), vuelve a instalarla y elige{" "}
+          <b>«Solo para mí»</b>.
+        </p>
+      )}
+            {estado?.estado === "descargando" && (
         <div className="h-1.5 overflow-hidden rounded-full bg-border">
           <div className="h-full rounded-full bg-brand transition-[width] duration-500" style={{ width: `${estado.porcentaje ?? 0}%` }} />
         </div>

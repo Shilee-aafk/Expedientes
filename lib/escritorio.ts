@@ -11,6 +11,8 @@ export type EstadoPlugin = { disponible: boolean; version: string | null; instal
 /** API que expone electron/preload.cjs. Solo existe dentro de la app de escritorio. */
 export type ApiEscritorio = {
   version: () => Promise<string>;
+  /** Solo en versiones 0.3.4 o posteriores */
+  instalacion?: () => Promise<{ paraTodos: boolean }>;
   estadoActualizacion: () => Promise<EstadoActualizacion>;
   buscarActualizacion: () => Promise<void>;
   instalarActualizacion: () => Promise<void>;

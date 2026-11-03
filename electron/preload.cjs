@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("escritorio", {
   version: () => ipcRenderer.invoke("app:version"),
+  instalacion: () => ipcRenderer.invoke("app:instalacion"),
   estadoActualizacion: () => ipcRenderer.invoke("actualizacion:estado"),
   buscarActualizacion: () => ipcRenderer.invoke("actualizacion:buscar"),
   instalarActualizacion: () => ipcRenderer.invoke("actualizacion:instalar"),
