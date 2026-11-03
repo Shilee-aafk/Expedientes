@@ -533,138 +533,82 @@ html[data-cambiando-tema] *::after {
   .card { background: white; box-shadow: none; backdrop-filter: none; border-color: #ccc; }
 }
 
-/* Barra lateral: burbuja sólida color crema. El nombre de cada opción sale de la
-   misma barra como una masa pegajosa: se estira con rebote, con uniones curvas
-   (rellenos cóncavos arriba y abajo) y el texto aparece un instante después.
-   Solo en la opción bajo el mouse (o con foco de teclado). */
-/* El vidrio va en una capa aparte (::before): si la barra misma tuviera backdrop-filter,
-   el nombre que sale de ella no podría desenfocar lo que hay detrás. */
+/* ─── Barra lateral (components/BarraLateral.tsx) ──────────────────────
+   Barra y nombre de la opción bajo el mouse son UNA sola forma de vidrio: --forma es
+   un path() que recorta el vidrio y traza el borde claro y la sombra. Al abrir, el
+   brazo se estira con rebote; al cerrar se recoge sin rebote. */
+@property --forma-t {
+  syntax: "<time>";
+  inherits: true;
+  initial-value: 0s;
+}
 @utility barra {
   position: relative;
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    border-radius: inherit;
-    background: var(--barra);
-    backdrop-filter: blur(18px) saturate(180%);
-    /* Sombra solo hacia abajo: si se abriera a los lados, quedaría debajo del nombre
-       que sale de la barra y marcaría la unión */
-    box-shadow: 0 22px 30px -16px var(--barra-sombra);
+  /* mientras no se mide (antes de cargar), una píldora normal */
+  border-radius: 999px;
+  --curva: cubic-bezier(0.4, 0, 0.2, 1);
+  --duracion: 0.28s;
+  &[data-abierto] {
+    --curva: cubic-bezier(0.34, 1.45, 0.64, 1);
+    --duracion: 0.55s;
   }
-  /* Borde claro. Se abre (máscara) a la altura de la opción que muestra su nombre */
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    box-shadow:
-      inset 0 0 0 1px var(--barra-borde),
-      inset 0 1px 0 var(--barra-brillo);
-    --a: calc(var(--hueco-y, -100px) - var(--hueco));
-    --b: calc(var(--hueco-y, -100px) + var(--hueco));
-    mask:
-      linear-gradient(#000 0 0) left / calc(100% - 3px) 100% no-repeat,
-      linear-gradient(#000 var(--a), transparent var(--a), transparent var(--b), #000 var(--b)) right / 3px 100% no-repeat;
-    transition: --hueco 0.25s ease 0.05s;
-  }
-  &[data-hueco]::after {
-    /* mitad del nombre (18px) + la unión curva (12px) */
-    --hueco: 30px;
-    transition: --hueco 0.12s ease;
+  &[data-sin-transicion] {
+    --duracion: 0s;
   }
 }
-@property --hueco {
-  syntax: "<length>";
-  inherits: true;
-  initial-value: 0px;
-}
-.etiqueta-barra {
-  --union: 12px;
-  /* empieza en el borde derecho del ícono; la barra termina 6px más allá */
-  --borde: 6px;
-}
-/* Forma del nombre: el cuerpo (empieza justo en el borde de la barra, sin solaparse:
-   dos vidrios encimados se verían más oscuros) y dos uniones curvas, todo del mismo
-   vidrio. Son hermanos y no hijos: un vidrio dentro de otro no desenfoca el fondo. */
-.etiqueta-forma {
-  transform: scaleX(0.15) scaleY(0.55);
-  transform-origin: left center;
-  opacity: 0;
-  transition:
-    transform 0.32s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.2s ease 0.08s;
-}
-.etiqueta-fondo,
-.etiqueta-union {
+.barra-capa {
   position: absolute;
+  left: 0;
+  top: 0;
+  /* espacio a la derecha para el brazo con el nombre */
+  width: calc(100% + 320px);
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.barra-vidrio {
+  z-index: -1;
   background: var(--barra);
-}
-.etiqueta-fondo {
   backdrop-filter: blur(18px) saturate(180%);
+  clip-path: var(--forma, inset(0 320px 0 0 round 999px));
+  transition: clip-path var(--duracion) var(--curva);
 }
-/* El navegador no dibuja un vidrio desenfocado con máscara: las uniones (pequeñas)
-   llevan el color del vidrio mezclado con el fondo, que se ve igual. */
-.etiqueta-union {
-  --union-color: color-mix(in srgb, var(--barra) 65%, var(--bg));
+.barra-trazo {
+  d: var(--forma);
+  transition: d var(--duracion) var(--curva);
 }
-.etiqueta-fondo {
-  top: 0;
-  bottom: 0;
-  right: 0;
-  left: var(--borde);
-  border-radius: 0 999px 999px 0;
-  box-shadow: 0 22px 30px -18px var(--barra-sombra);
+.barra-borde {
+  z-index: 0;
 }
-/* Borde claro del nombre: arriba, la punta redonda y abajo; no del lado de la barra,
-   y empieza donde terminan las curvas de la unión (que llevan su propio borde) */
-.etiqueta-borde {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 0;
-  left: calc(var(--borde) + var(--union));
-  border-radius: 0 999px 999px 0;
-  box-shadow:
-    inset 0 1px 0 var(--barra-borde),
-    inset 0 -1px 0 var(--barra-borde),
-    inset -1px 0 0 var(--barra-borde);
-  clip-path: inset(0 0 0 0);
+.barra-borde .barra-trazo {
+  fill: none;
+  stroke: var(--barra-borde);
+  stroke-width: 1px;
 }
-.etiqueta-union {
-  left: var(--borde);
-  width: var(--union);
-  height: var(--union);
+.barra-sombra {
+  z-index: -2;
 }
-/* Curvas de la unión: por dentro del círculo, nada; en el borde del círculo, la línea
-   clara (sigue la curvatura); por fuera, el color del vidrio */
-.etiqueta-union.arriba {
-  bottom: 100%;
-  background: radial-gradient(circle at 100% 0, transparent calc(var(--union) - 1.25px), var(--barra-borde) calc(var(--union) - 0.75px),
-    var(--barra-borde) calc(var(--union) - 0.25px), var(--union-color) calc(var(--union) + 0.25px));
+.barra-sombra g > .barra-trazo {
+  fill: var(--barra-sombra);
+  transform: translateY(8px);
 }
-.etiqueta-union.abajo {
-  top: 100%;
-  background: radial-gradient(circle at 100% 100%, transparent calc(var(--union) - 1.25px), var(--barra-borde) calc(var(--union) - 0.75px),
-    var(--barra-borde) calc(var(--union) - 0.25px), var(--union-color) calc(var(--union) + 0.25px));
+/* Sin JS todavía (no hay --forma): borde y sombra con CSS */
+.barra:not([style*="--forma"]) .barra-vidrio {
+  box-shadow: inset 0 0 0 1px var(--barra-borde);
 }
+.barra > :not(.barra-capa) {
+  position: relative;
+}
+
+/* Texto del nombre: aparece un instante después de que el brazo se estira */
 .etiqueta-texto {
   opacity: 0;
   transform: translateX(-10px);
   transition:
-    opacity 0.15s ease,
-    transform 0.25s ease;
+    opacity 0.12s ease,
+    transform 0.2s ease;
 }
 @media (hover: hover) {
-  .group:hover > .etiqueta-barra .etiqueta-forma {
-    opacity: 1;
-    transform: none;
-    transition:
-      transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
-      opacity 0.12s ease;
-  }
   .group:hover > .etiqueta-barra .etiqueta-texto {
     opacity: 1;
     transform: none;
@@ -672,10 +616,6 @@ html[data-cambiando-tema] *::after {
       opacity 0.25s ease 0.12s,
       transform 0.45s var(--ease-out-expo) 0.1s;
   }
-}
-.group:focus-visible > .etiqueta-barra .etiqueta-forma {
-  opacity: 1;
-  transform: none;
 }
 .group:focus-visible > .etiqueta-barra .etiqueta-texto {
   opacity: 1;
