@@ -621,3 +621,30 @@ html[data-cambiando-tema] *::after {
   opacity: 1;
   transform: none;
 }
+
+/* Mapa del KMZ (Leaflet): controles con el estilo de la app */
+.mapa-kmz .leaflet-control-layers,
+.mapa-kmz .leaflet-bar a,
+.mapa-kmz .leaflet-control-attribution,
+.mapa-kmz .leaflet-control-scale-line {
+  background: var(--barra);
+  backdrop-filter: blur(12px);
+  color: var(--text);
+  border-color: var(--barra-borde);
+}
+.mapa-kmz .leaflet-bar {
+  border: 1px solid var(--barra-borde);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.mapa-kmz .leaflet-control-attribution a {
+  color: var(--text);
+}
+.mapa-kmz .leaflet-tooltip {
+  background: var(--barra);
+  backdrop-filter: blur(12px);
+  color: var(--text);
+  border: 1px solid var(--barra-borde);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px var(--barra-sombra);
+}

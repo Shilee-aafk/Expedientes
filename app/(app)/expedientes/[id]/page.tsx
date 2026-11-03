@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MapaKmz } from "@/components/MapaKmz";
 import { EstadoBadge, Progreso } from "@/components/ui";
 import { hoyChile, resumen } from "@/lib/checklist";
 import { cargarExpediente } from "@/lib/datos";
@@ -13,6 +14,8 @@ export default async function ExpedientePage({ params }: { params: Promise<{ id:
   const { expediente, items, duenos, historial } = await cargarExpediente(id);
   const hoy = hoyChile();
   const r = resumen(items, duenos.length, hoy);
+  // El KMZ/KML adjunto (normalmente en "Pendrive con KMZ") se muestra en el mapa
+  const kmz = items.find((i) => i.archivo_path && /\.(kmz|kml)$/i.test(i.archivo_path))?.archivo_path ?? null;
 
   return (
     <div className="space-y-6">
@@ -51,6 +54,11 @@ export default async function ExpedientePage({ params }: { params: Promise<{ id:
             )}
           </div>
           <Checklist items={items} numDuenos={duenos.length} hoy={hoy} expedienteId={id} />
+          {kmz ? (
+            <MapaKmz key={kmz} ruta={kmz} />
+          ) : (
+            <p className="px-1 text-xs text-muted">Adjunta el archivo KMZ en el requisito «Pendrive con KMZ» para ver el predio en el mapa.</p>
+          )}
         </section>
 
         <aside className="space-y-4 [&>*]:cascada [&>*:nth-child(2)]:[--i:2] [&>*:nth-child(3)]:[--i:4] [&>*:nth-child(4)]:[--i:6]">

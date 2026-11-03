@@ -1,0 +1,35 @@
+# Visita automática a Supabase cada 3 días. El plan gratis pausa el proyecto tras
+# ~7 días sin uso (y la app deja de conectar); una consulta real a la base lo evita.
+# Usa la clave pública (anon) del environment "production": solo pregunta si hay usuarios.
+name: Mantener Supabase activo
+
+on:
+  schedule:
+    # 09:17 UTC cada 3 días
+    - cron: "17 9 */3 * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  visitar:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 5
+    steps:
+      - name: Consultar la base
+        env:
+          URL: ${{ secrets.SUPABASE_URL || vars.SUPABASE_URL }}
+          CLAVE: ${{ secrets.SUPABASE_ANON_KEY || vars.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$URL" ] || [ -z "$CLAVE" ]; then
+            echo "::error::Faltan SUPABASE_URL y SUPABASE_ANON_KEY (secretos del environment production)."; exit 1
+          fi
+          for intento in 1 2 3; do
+            codigo=$(curl -sS -o respuesta.txt -w "%{http_code}" -X POST "$URL/rest/v1/rpc/hay_usuarios" \
+              -H "apikey: $CLAVE" -H "Authorization: Bearer $CLAVE" -H "Content-Type: application/json" -d '{}' || echo 000)
+            if [ "$codigo" = "200" ]; then echo "Supabase respondió: $(cat respuesta.txt)"; exit 0; fi
+            echo "Intento $intento: HTTP $codigo $(cat respuesta.txt 2>/dev/null)"; sleep 20
+          done
+          echo "::error::Supabase no respondió. Si el proyecto quedó pausado, reactívalo en el panel de Supabase (Restore project)."
+          exit 1
