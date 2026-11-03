@@ -25,8 +25,9 @@
 
   --bg: #f6f1e8;
   /* Barra lateral: crema más fuerte y sólido (el nombre sale "estirado" de ella) */
-  --barra: #ecdcc0;
+  --barra: rgb(236 218 186 / 0.58);
   --barra-sombra: rgb(120 90 40 / 0.22);
+  --barra-brillo: rgb(255 255 255 / 0.7);
   --blob-1: rgb(201 169 120 / 0.45);
   --blob-2: rgb(232 208 165 / 0.55);
   --blob-3: rgb(170 130 80 / 0.28);
@@ -75,8 +76,9 @@
   --danger-soft: rgb(240 138 124 / 0.13);
 
   --bg: #0d0b09;
-  --barra: #2a231a;
+  --barra: rgb(58 48 34 / 0.5);
   --barra-sombra: rgb(0 0 0 / 0.55);
+  --barra-brillo: rgb(255 236 205 / 0.16);
   --blob-1: rgb(200 160 100 / 0.3);
   --blob-2: rgb(150 100 55 / 0.26);
   --blob-3: rgb(230 205 160 / 0.13);
@@ -533,17 +535,32 @@ html[data-cambiando-tema] *::after {
    misma barra como una masa pegajosa: se estira con rebote, con uniones curvas
    (rellenos cóncavos arriba y abajo) y el texto aparece un instante después.
    Solo en la opción bajo el mouse (o con foco de teclado). */
+/* El vidrio va en una capa aparte (::before): si la barra misma tuviera backdrop-filter,
+   el nombre que sale de ella no podría desenfocar lo que hay detrás. */
 @utility barra {
-  background: var(--barra);
-  box-shadow: 0 10px 30px var(--barra-sombra), inset 0 1px 0 rgb(255 255 255 / 0.18);
+  position: relative;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--barra);
+    backdrop-filter: blur(18px) saturate(180%);
+    box-shadow:
+      0 10px 30px var(--barra-sombra),
+      inset 0 1px 0 var(--barra-brillo);
+  }
 }
 .etiqueta-barra {
-  --union: 10px;
+  --union: 12px;
   /* empieza en el borde derecho del ícono; la barra termina 6px más allá */
   --borde: 6px;
 }
-.etiqueta-fondo {
-  background: var(--barra);
+/* Forma del nombre: el cuerpo (empieza justo en el borde de la barra, sin solaparse:
+   dos vidrios encimados se verían más oscuros) y dos uniones curvas, todo del mismo
+   vidrio. Son hermanos y no hijos: un vidrio dentro de otro no desenfoca el fondo. */
+.etiqueta-forma {
   transform: scaleX(0.15) scaleY(0.55);
   transform-origin: left center;
   opacity: 0;
@@ -551,22 +568,43 @@ html[data-cambiando-tema] *::after {
     transform 0.32s cubic-bezier(0.4, 0, 0.2, 1),
     opacity 0.2s ease 0.08s;
 }
-.etiqueta-fondo::before,
-.etiqueta-fondo::after {
-  content: "";
+.etiqueta-fondo,
+.etiqueta-union {
   position: absolute;
-  /* 1px dentro de la barra para que no se vea la unión */
-  left: calc(var(--borde) - 1px);
-  width: calc(var(--union) + 1px);
+  background: var(--barra);
+}
+.etiqueta-fondo {
+  backdrop-filter: blur(18px) saturate(180%);
+}
+/* El navegador no dibuja un vidrio desenfocado con máscara: las uniones (pequeñas)
+   llevan el color del vidrio mezclado con el fondo, que se ve igual. */
+.etiqueta-union {
+  background: color-mix(in srgb, var(--barra) 65%, var(--bg));
+}
+.etiqueta-fondo {
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: var(--borde);
+  border-radius: 0 999px 999px 0;
+  box-shadow:
+    10px 10px 24px -14px var(--barra-sombra),
+    inset 0 1px 0 var(--barra-brillo),
+    inset -0.5px 0 0 var(--barra-brillo),
+    inset 0 -0.5px 0 var(--barra-brillo);
+}
+.etiqueta-union {
+  left: var(--borde);
+  width: var(--union);
   height: var(--union);
 }
-.etiqueta-fondo::before {
-  top: calc(-1 * var(--union));
-  background: radial-gradient(circle at 100% 0, transparent calc(var(--union) - 0.5px), var(--barra) var(--union));
+.etiqueta-union.arriba {
+  bottom: 100%;
+  mask: radial-gradient(circle at 100% 0, transparent calc(var(--union) - 0.5px), #000 var(--union));
 }
-.etiqueta-fondo::after {
-  bottom: calc(-1 * var(--union));
-  background: radial-gradient(circle at 100% 100%, transparent calc(var(--union) - 0.5px), var(--barra) var(--union));
+.etiqueta-union.abajo {
+  top: 100%;
+  mask: radial-gradient(circle at 100% 100%, transparent calc(var(--union) - 0.5px), #000 var(--union));
 }
 .etiqueta-texto {
   opacity: 0;
@@ -576,7 +614,7 @@ html[data-cambiando-tema] *::after {
     transform 0.25s ease;
 }
 @media (hover: hover) {
-  .group:hover > .etiqueta-barra .etiqueta-fondo {
+  .group:hover > .etiqueta-barra .etiqueta-forma {
     opacity: 1;
     transform: none;
     transition:
@@ -591,7 +629,7 @@ html[data-cambiando-tema] *::after {
       transform 0.45s var(--ease-out-expo) 0.1s;
   }
 }
-.group:focus-visible > .etiqueta-barra .etiqueta-fondo {
+.group:focus-visible > .etiqueta-barra .etiqueta-forma {
   opacity: 1;
   transform: none;
 }
