@@ -65,12 +65,12 @@ export function BotonTema() {
     <button
       type="button"
       onClick={cambiar}
-      className="group relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:text-text active:scale-95"
+      className="group relative flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:text-text active:scale-95"
       aria-label={`Tema: ${ETIQUETA[pref]} (clic para cambiar)`}
     >
       <EtiquetaBarra texto={`Tema: ${ETIQUETA[pref]}`} />
       <span key={pref} className="pop relative">
-        <Icono className="h-5 w-5" />
+        <Icono className="h-6 w-6" />
       </span>
     </button>
   );

@@ -16,8 +16,8 @@ export type Medidas = {
 };
 
 /** Mitad del alto del brazo y radio de las uniones curvas */
-export const MEDIO_BRAZO = 18;
-export const UNION = 12;
+export const MEDIO_BRAZO = 20;
+export const UNION = 14;
 
 const n = (v: number) => Math.round(v * 100) / 100;
 

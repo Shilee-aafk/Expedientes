@@ -32,7 +32,7 @@ export function MenuPrincipal() {
       <div className="relative grid grid-rows-4 gap-1">
         <span
           aria-hidden
-          className="liquido absolute inset-x-0 top-0 h-10 rounded-full transition-[transform,opacity] duration-500 ease-[var(--ease-spring)]"
+          className="liquido absolute inset-x-0 top-0 h-12 rounded-full transition-[transform,opacity] duration-500 ease-[var(--ease-spring)]"
           style={{ transform: `translateY(calc(${Math.max(activo, 0)} * (100% + 0.25rem)))`, opacity: activo < 0 ? 0 : 1 }}
         />
         {enlaces.map((e, i) => {
@@ -43,13 +43,13 @@ export function MenuPrincipal() {
               href={e.href}
               aria-current={on ? "page" : undefined}
               aria-label={e.texto}
-              className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-300 active:scale-95 ${
+              className={`group relative flex h-12 w-12 items-center justify-center rounded-full transition-colors duration-300 active:scale-95 ${
                 on ? "text-on-oro" : "text-muted hover:text-text"
               }`}
             >
               <EtiquetaBarra texto={e.texto} />
               <span className={`relative transition-transform duration-500 ease-[var(--ease-spring)] ${on ? "scale-110" : ""}`}>
-                <e.Icono className="h-5 w-5" />
+                <e.Icono className="h-6 w-6" />
               </span>
             </Link>
           );
