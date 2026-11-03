@@ -147,11 +147,11 @@ namespace ExpedientesSPR.Nucleo
             return string.Join(" ", partes);
         }
 
-        /// <summary>Líneas aproximadas que ocupa un texto (letra romans: ~0,75 de la altura por carácter).</summary>
+        /// <summary>Líneas aproximadas que ocupa un texto (letra romans en mayúsculas: ~0,85 de la altura por carácter, con margen).</summary>
         public static int Lineas(string texto, double ancho, double altura)
         {
             if (string.IsNullOrEmpty(texto)) return 1;
-            var porLinea = Math.Max(1, (int)Math.Floor(ancho / (altura * 0.75)));
+            var porLinea = Math.Max(1, (int)Math.Floor(ancho / (altura * 0.85)));
             var lineas = 1;
             var largo = 0;
             foreach (var palabra in texto.Split(' '))
