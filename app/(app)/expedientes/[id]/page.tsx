@@ -5,6 +5,7 @@ import { hoyChile, resumen } from "@/lib/checklist";
 import { cargarExpediente } from "@/lib/datos";
 import { formatoFechaHora } from "@/lib/formato";
 import { plazo } from "@/lib/plazos";
+import { listarKmz } from "@/lib/repo";
 import { Checklist } from "./Checklist";
 import { DatosForm } from "./DatosForm";
 import { Duenos } from "./Duenos";
@@ -18,6 +19,8 @@ export default async function ExpedientePage({ params }: { params: Promise<{ id:
   const p = plazo(expediente, hoy);
   // El KMZ/KML adjunto (normalmente en "Pendrive con KMZ") se muestra en el mapa
   const kmz = items.find((i) => i.archivo_path && /\.(kmz|kml)$/i.test(i.archivo_path))?.archivo_path ?? null;
+  // Los KMZ de los demás expedientes se ven de fondo en el mapa
+  const otrosKmz = kmz ? (await listarKmz().catch(() => [])).filter((k) => k.expedienteId !== id) : [];
 
   return (
     <div className="space-y-6">
@@ -61,7 +64,7 @@ export default async function ExpedientePage({ params }: { params: Promise<{ id:
           </div>
           <Checklist items={items} numDuenos={duenos.length} hoy={hoy} expedienteId={id} />
           {kmz ? (
-            <MapaKmz key={kmz} ruta={kmz} />
+            <MapaKmz key={kmz} ruta={kmz} otros={otrosKmz} />
           ) : (
             <p className="px-1 text-xs text-muted">Adjunta el archivo KMZ en el requisito «Pendrive con KMZ» para ver el predio en el mapa.</p>
           )}

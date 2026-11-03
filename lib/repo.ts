@@ -114,6 +114,28 @@ export async function eliminarRequisito(id: number) {
 
 /* ─── Expedientes ─────────────────────────────────────────────────── */
 
+/** KMZ/KML adjunto de cada expediente (uno por expediente, el primero del checklist). */
+export type KmzExpediente = { expedienteId: number; codigo: string; predio: string; ruta: string };
+
+export async function listarKmz(): Promise<KmzExpediente[]> {
+  const supabase = await createClient();
+  const filas = revisar(
+    await supabase
+      .from("expediente_items")
+      .select("expediente_id, archivo_path, orden, expediente:expedientes(codigo, predio)")
+      .or("archivo_path.ilike.%.kmz,archivo_path.ilike.%.kml")
+      .order("orden"),
+  ) as unknown as { expediente_id: number; archivo_path: string; expediente: { codigo: string; predio: string } | null }[];
+  const vistos = new Set<number>();
+  const lista: KmzExpediente[] = [];
+  for (const f of filas) {
+    if (vistos.has(f.expediente_id) || !f.expediente) continue;
+    vistos.add(f.expediente_id);
+    lista.push({ expedienteId: f.expediente_id, codigo: f.expediente.codigo, predio: f.expediente.predio, ruta: f.archivo_path });
+  }
+  return lista;
+}
+
 export type FilaListado = Expediente & { items: Item[]; duenos: { nombre: string }[]; profesional: { nombre: string } | null };
 
 export async function listarExpedientes(): Promise<FilaListado[]> {

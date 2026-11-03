@@ -1,20 +1,33 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type * as L from "leaflet";
 import { formatoHa, formatoM, leerArchivoMapa, type Elemento } from "@/lib/kmz";
+import type { KmzExpediente } from "@/lib/repo";
 
 const ORO = "#d6b582";
+/** Los KMZ de otros expedientes: claros y discretos, para no competir con el propio */
+const OTRO = "#e9e4da";
+
+async function descargar(ruta: string) {
+  const r = await fetch(`/archivo?path=${encodeURIComponent(ruta)}`);
+  if (!r.ok) throw new Error("No se pudo descargar el archivo.");
+  return leerArchivoMapa(new Uint8Array(await r.arrayBuffer()));
+}
 
 /** Polígono, línea o punto dibujado en el mapa */
 type Capa = L.Path & { getBounds?: () => L.LatLngBounds; getLatLng?: () => L.LatLng };
 
 /**
  * Muestra en un mapa (satelital o calles) el KMZ/KML adjunto al expediente, con la
- * superficie y el perímetro de cada polígono. Leaflet se carga solo en el navegador.
+ * superficie y el perímetro de cada polígono. De fondo se ven los KMZ de los demás
+ * expedientes (capa "Otros expedientes"), pero el mapa se centra en el propio.
+ * Leaflet se carga solo en el navegador.
  */
-export function MapaKmz({ ruta }: { ruta: string }) {
+export function MapaKmz({ ruta, otros = [] }: { ruta: string; otros?: KmzExpediente[] }) {
+  const router = useRouter();
   const contenedor = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
   const capas = useRef<Map<number, Capa>>(new Map());
@@ -28,9 +41,7 @@ export function MapaKmz({ ruta }: { ruta: string }) {
     const dibujadas = capas.current;
     (async () => {
       try {
-        const r = await fetch(`/archivo?path=${encodeURIComponent(ruta)}`);
-        if (!r.ok) throw new Error("No se pudo descargar el archivo.");
-        const el = await leerArchivoMapa(new Uint8Array(await r.arrayBuffer()));
+        const el = await descargar(ruta);
         if (cancelado) return;
         setElementos(el);
 
@@ -48,7 +59,10 @@ export function MapaKmz({ ruta }: { ruta: string }) {
           maxNativeZoom: 19,
           attribution: "© colaboradores de OpenStreetMap",
         });
-        Lf.control.layers({ Satélite: satelite, Calles: calles }, undefined, { position: "topright" }).addTo(m);
+        const capaOtros = Lf.featureGroup().addTo(m);
+        Lf.control
+          .layers({ Satélite: satelite, Calles: calles }, otros.length ? { "Otros expedientes": capaOtros } : undefined, { position: "topright" })
+          .addTo(m);
         Lf.control.scale({ imperial: false }).addTo(m);
 
         const grupo = Lf.featureGroup().addTo(m);
@@ -69,6 +83,37 @@ export function MapaKmz({ ruta }: { ruta: string }) {
           capas.current.set(i, capa);
         });
         m.fitBounds(grupo.getBounds(), { padding: [24, 24], maxZoom: 18 });
+        grupo.bringToFront();
+
+        // Los demás expedientes, de a pocos a la vez (sin mover el foco del mapa)
+        const pendientes = [...otros];
+        const trabajar = async () => {
+          for (let o = pendientes.shift(); o && !cancelado; o = pendientes.shift()) {
+            try {
+              const eo = await descargar(o.ruta);
+              if (cancelado) return;
+              const g = Lf.featureGroup();
+              for (const e of eo) {
+                const c =
+                  e.tipo === "poligono"
+                    ? Lf.polygon(e.anillo, { color: OTRO, weight: 1.5, opacity: 0.8, fillColor: OTRO, fillOpacity: 0.08 })
+                    : e.tipo === "linea"
+                      ? Lf.polyline(e.puntos, { color: OTRO, weight: 1, opacity: 0.6, dashArray: "4 6" })
+                      : Lf.circleMarker(e.punto, { radius: 4, color: OTRO, weight: 1, fillColor: OTRO, fillOpacity: 0.7 });
+                c.addTo(g);
+              }
+              g.bindTooltip(`<b>${escapar(o.predio)}</b><br>${escapar(o.codigo)} · clic para abrir`, { sticky: true });
+              g.on("click", () => router.push(`/expedientes/${o.expedienteId}`));
+              g.on("mouseover", () => g.setStyle({ weight: 3, fillOpacity: 0.16 }));
+              g.on("mouseout", () => g.setStyle({ weight: 1.5, fillOpacity: 0.08 }));
+              g.addTo(capaOtros);
+              grupo.bringToFront();
+            } catch {
+              /* un KMZ ajeno dañado no impide ver el resto */
+            }
+          }
+        };
+        void Promise.all([trabajar(), trabajar(), trabajar()]);
       } catch (e) {
         if (!cancelado) setError((e as Error).message);
       }
@@ -79,6 +124,8 @@ export function MapaKmz({ ruta }: { ruta: string }) {
       mapa.current = null;
       dibujadas.clear();
     };
+    // otros llega del servidor y no cambia mientras se ve el mapa
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ruta]);
 
   // Resalta el elemento elegido en la lista o en el mapa
@@ -142,7 +189,10 @@ export function MapaKmz({ ruta }: { ruta: string }) {
           )}
         </ul>
       )}
-      <p className="text-xs text-muted">Superficies calculadas sobre el elipsoide WGS84; pueden diferir levemente de las del plano en UTM.</p>
+      <p className="text-xs text-muted">
+        {otros.length > 0 && `En gris, ${otros.length === 1 ? "el KMZ de otro expediente" : `los KMZ de otros ${otros.length} expedientes`} (clic para abrirlo). `}
+        Superficies calculadas sobre el elipsoide WGS84; pueden diferir levemente de las del plano en UTM.
+      </p>
     </div>
   );
 }
