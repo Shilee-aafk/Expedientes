@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import { CLAVE_TEMA, resolverTema, type PreferenciaTema } from "@/lib/tema";
+import { EtiquetaBarra } from "./EtiquetaBarra";
 import { IconoAuto, IconoLuna, IconoSol } from "./Iconos";
 
 const ORDEN: PreferenciaTema[] = ["oscuro", "claro", "auto"];
@@ -64,11 +65,11 @@ export function BotonTema() {
     <button
       type="button"
       onClick={cambiar}
-      className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:bg-glass-hover hover:text-text active:scale-95"
-      title={`Tema: ${ETIQUETA[pref]} (clic para cambiar)`}
-      aria-label={`Tema: ${ETIQUETA[pref]}`}
+      className="group relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:text-text active:scale-95"
+      aria-label={`Tema: ${ETIQUETA[pref]} (clic para cambiar)`}
     >
-      <span key={pref} className="pop">
+      <EtiquetaBarra texto={`Tema: ${ETIQUETA[pref]}`} />
+      <span key={pref} className="pop relative">
         <Icono className="h-5 w-5" />
       </span>
     </button>

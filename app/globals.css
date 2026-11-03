@@ -24,6 +24,9 @@
   --danger-soft: rgb(176 58 46 / 0.1);
 
   --bg: #f6f1e8;
+  /* Barra lateral: crema más fuerte y sólido (el nombre sale "estirado" de ella) */
+  --barra: #ecdcc0;
+  --barra-sombra: rgb(120 90 40 / 0.22);
   --blob-1: rgb(201 169 120 / 0.45);
   --blob-2: rgb(232 208 165 / 0.55);
   --blob-3: rgb(170 130 80 / 0.28);
@@ -72,6 +75,8 @@
   --danger-soft: rgb(240 138 124 / 0.13);
 
   --bg: #0d0b09;
+  --barra: #2a231a;
+  --barra-sombra: rgb(0 0 0 / 0.55);
   --blob-1: rgb(200 160 100 / 0.3);
   --blob-2: rgb(150 100 55 / 0.26);
   --blob-3: rgb(230 205 160 / 0.13);
@@ -294,6 +299,13 @@ body::after {
   animation: entrar 0.45s var(--ease-out-expo) backwards;
   animation-delay: calc(min(var(--i, 0), 8) * 35ms);
 }
+@keyframes flotar-entrada-lado {
+  from { opacity: 0; transform: translateX(-24px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@utility flotar-entrada-lado {
+  animation: flotar-entrada-lado 0.7s var(--ease-out-expo) backwards;
+}
 @utility flotar-entrada {
   animation: flotar-entrada 0.7s var(--ease-out-expo) backwards;
 }
@@ -515,4 +527,75 @@ html[data-cambiando-tema] *::after {
   body { background: white; color: black; }
   body::before, body::after { display: none; }
   .card { background: white; box-shadow: none; backdrop-filter: none; border-color: #ccc; }
+}
+
+/* Barra lateral: burbuja sólida color crema. El nombre de cada opción sale de la
+   misma barra como una masa pegajosa: se estira con rebote, con uniones curvas
+   (rellenos cóncavos arriba y abajo) y el texto aparece un instante después.
+   Solo en la opción bajo el mouse (o con foco de teclado). */
+@utility barra {
+  background: var(--barra);
+  box-shadow: 0 10px 30px var(--barra-sombra), inset 0 1px 0 rgb(255 255 255 / 0.18);
+}
+.etiqueta-barra {
+  --union: 10px;
+  /* empieza en el borde derecho del ícono; la barra termina 6px más allá */
+  --borde: 6px;
+}
+.etiqueta-fondo {
+  background: var(--barra);
+  transform: scaleX(0.15) scaleY(0.55);
+  transform-origin: left center;
+  opacity: 0;
+  transition:
+    transform 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.2s ease 0.08s;
+}
+.etiqueta-fondo::before,
+.etiqueta-fondo::after {
+  content: "";
+  position: absolute;
+  /* 1px dentro de la barra para que no se vea la unión */
+  left: calc(var(--borde) - 1px);
+  width: calc(var(--union) + 1px);
+  height: var(--union);
+}
+.etiqueta-fondo::before {
+  top: calc(-1 * var(--union));
+  background: radial-gradient(circle at 100% 0, transparent calc(var(--union) - 0.5px), var(--barra) var(--union));
+}
+.etiqueta-fondo::after {
+  bottom: calc(-1 * var(--union));
+  background: radial-gradient(circle at 100% 100%, transparent calc(var(--union) - 0.5px), var(--barra) var(--union));
+}
+.etiqueta-texto {
+  opacity: 0;
+  transform: translateX(-10px);
+  transition:
+    opacity 0.15s ease,
+    transform 0.25s ease;
+}
+@media (hover: hover) {
+  .group:hover > .etiqueta-barra .etiqueta-fondo {
+    opacity: 1;
+    transform: none;
+    transition:
+      transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+      opacity 0.12s ease;
+  }
+  .group:hover > .etiqueta-barra .etiqueta-texto {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.25s ease 0.12s,
+      transform 0.45s var(--ease-out-expo) 0.1s;
+  }
+}
+.group:focus-visible > .etiqueta-barra .etiqueta-fondo {
+  opacity: 1;
+  transform: none;
+}
+.group:focus-visible > .etiqueta-barra .etiqueta-texto {
+  opacity: 1;
+  transform: none;
 }
