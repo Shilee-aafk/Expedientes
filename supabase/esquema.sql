@@ -246,6 +246,21 @@ begin
   update auth.users set banned_until = 'infinity' where id = p_id;
 end $$;
 
+-- Contraseña temporal para otra persona del equipo (si la olvidó). Cierra sus sesiones abiertas.
+create or replace function public.restablecer_clave(p_id uuid, p_clave text)
+returns void language plpgsql security definer set search_path = public, extensions, auth as $$
+begin
+  if not public.es_miembro() then raise exception 'Sin permiso.'; end if;
+  if p_id = auth.uid() then raise exception 'Tu propia contraseña se cambia con «Cambiar contraseña».'; end if;
+  if length(coalesce(p_clave, '')) < 6 then raise exception 'La contraseña debe tener al menos 6 caracteres.'; end if;
+  if not exists (select 1 from public.profiles where id = p_id) then raise exception 'El usuario no existe.'; end if;
+  update auth.users set encrypted_password = crypt(p_clave, gen_salt('bf')), updated_at = now() where id = p_id;
+  begin
+    delete from auth.sessions where user_id = p_id;
+  exception when others then null; -- si no se pudiera, la clave nueva igual queda puesta
+  end;
+end $$;
+
 create or replace function public.reactivar_usuario(p_id uuid)
 returns void language plpgsql security definer set search_path = public, auth as $$
 begin
@@ -466,7 +481,7 @@ end $$;
 -- ─── Permisos ────────────────────────────────────────────────────────
 grant execute on function public.hay_usuarios(), public.estado_base(), public.correo_de(text),
   public.crear_primer_usuario(text, text, text), public.importar_usuarios(jsonb, text) to anon, authenticated;
-grant execute on function public.crear_usuario(text, text, text), public.desactivar_usuario(uuid),
+grant execute on function public.crear_usuario(text, text, text), public.desactivar_usuario(uuid), public.restablecer_clave(uuid, text),
   public.reactivar_usuario(uuid), public.importar_datos(jsonb), public.es_miembro() to authenticated;
 
 -- ─── Seguridad por filas: solo miembros activos ──────────────────────

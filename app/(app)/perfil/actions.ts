@@ -56,6 +56,21 @@ export async function desactivarUsuario(id: string) {
   revalidatePath("/perfil");
 }
 
+/** Contraseña temporal para alguien que olvidó la suya. Devuelve "Guardado" o el error. */
+export async function restablecerClave(id: string, _: string | null, f: FormData) {
+  const { user } = await requireUser();
+  if (id === user.id) return "Tu contraseña se cambia arriba, en «Cambiar contraseña».";
+  const clave = String(f.get("clave") ?? "");
+  if (clave !== String(f.get("clave2") ?? "")) return "Las contraseñas no coinciden.";
+  try {
+    await repo.restablecerClave(id, clave);
+  } catch (e) {
+    const m = (e as Error).message;
+    return /restablecer_clave/.test(m) ? "Falta actualizar la base: ejecuta de nuevo supabase/esquema.sql en Supabase." : m;
+  }
+  return "Guardado";
+}
+
 export async function reactivarUsuario(id: string) {
   await requireUser();
   await repo.reactivarUsuario(id);

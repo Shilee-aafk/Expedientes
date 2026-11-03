@@ -54,6 +54,12 @@ export async function desactivarUsuario(id: string) {
   revisar(await supabase.rpc("desactivar_usuario", { p_id: id }));
 }
 
+/** Contraseña temporal para otra persona del equipo (cierra sus sesiones abiertas). */
+export async function restablecerClave(id: string, clave: string) {
+  const supabase = await createClient();
+  revisar(await supabase.rpc("restablecer_clave", { p_id: id, p_clave: clave }));
+}
+
 export async function reactivarUsuario(id: string) {
   const supabase = await createClient();
   revisar(await supabase.rpc("reactivar_usuario", { p_id: id }));
@@ -115,23 +121,23 @@ export async function eliminarRequisito(id: number) {
 /* ─── Expedientes ─────────────────────────────────────────────────── */
 
 /** KMZ/KML adjunto de cada expediente (uno por expediente, el primero del checklist). */
-export type KmzExpediente = { expedienteId: number; codigo: string; predio: string; ruta: string };
+export type KmzExpediente = { expedienteId: number; codigo: string; predio: string; estado: EstadoExpediente; ruta: string };
 
 export async function listarKmz(): Promise<KmzExpediente[]> {
   const supabase = await createClient();
   const filas = revisar(
     await supabase
       .from("expediente_items")
-      .select("expediente_id, archivo_path, orden, expediente:expedientes(codigo, predio)")
+      .select("expediente_id, archivo_path, orden, expediente:expedientes(codigo, predio, estado)")
       .or("archivo_path.ilike.%.kmz,archivo_path.ilike.%.kml")
       .order("orden"),
-  ) as unknown as { expediente_id: number; archivo_path: string; expediente: { codigo: string; predio: string } | null }[];
+  ) as unknown as { expediente_id: number; archivo_path: string; expediente: { codigo: string; predio: string; estado: EstadoExpediente } | null }[];
   const vistos = new Set<number>();
   const lista: KmzExpediente[] = [];
   for (const f of filas) {
     if (vistos.has(f.expediente_id) || !f.expediente) continue;
     vistos.add(f.expediente_id);
-    lista.push({ expedienteId: f.expediente_id, codigo: f.expediente.codigo, predio: f.expediente.predio, ruta: f.archivo_path });
+    lista.push({ expedienteId: f.expediente_id, codigo: f.expediente.codigo, predio: f.expediente.predio, estado: f.expediente.estado, ruta: f.archivo_path });
   }
   return lista;
 }

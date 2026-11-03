@@ -4,18 +4,14 @@ import "leaflet/dist/leaflet.css";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type * as L from "leaflet";
-import { formatoHa, formatoM, leerArchivoMapa, type Elemento } from "@/lib/kmz";
+import { formatoHa, formatoM, type Elemento } from "@/lib/kmz";
+import { descargarKmz } from "@/lib/mapaBase";
 import type { KmzExpediente } from "@/lib/repo";
 
 const ORO = "#d6b582";
 /** Los KMZ de otros expedientes: claros y discretos, para no competir con el propio */
 const OTRO = "#e9e4da";
 
-async function descargar(ruta: string) {
-  const r = await fetch(`/archivo?path=${encodeURIComponent(ruta)}`);
-  if (!r.ok) throw new Error("No se pudo descargar el archivo.");
-  return leerArchivoMapa(new Uint8Array(await r.arrayBuffer()));
-}
 
 /** Polígono, línea o punto dibujado en el mapa */
 type Capa = L.Path & { getBounds?: () => L.LatLngBounds; getLatLng?: () => L.LatLng };
@@ -41,7 +37,7 @@ export function MapaKmz({ ruta, otros = [] }: { ruta: string; otros?: KmzExpedie
     const dibujadas = capas.current;
     (async () => {
       try {
-        const el = await descargar(ruta);
+        const el = await descargarKmz(ruta);
         if (cancelado) return;
         setElementos(el);
 
@@ -90,7 +86,7 @@ export function MapaKmz({ ruta, otros = [] }: { ruta: string; otros?: KmzExpedie
         const trabajar = async () => {
           for (let o = pendientes.shift(); o && !cancelado; o = pendientes.shift()) {
             try {
-              const eo = await descargar(o.ruta);
+              const eo = await descargarKmz(o.ruta);
               if (cancelado) return;
               const g = Lf.featureGroup();
               for (const e of eo) {
