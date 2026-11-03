@@ -26,6 +26,7 @@ export type Profile = {
   rut: string | null;
   carnet_path: string | null;
   titulo_path: string | null;
+  profesion: string | null;
   activo: boolean;
 };
 
@@ -42,7 +43,15 @@ export type Requisito = {
   activo: boolean;
 };
 
-export type Dueno = { id: number; expediente_id: number; nombre: string; rut: string | null };
+export type Dueno = {
+  id: number;
+  expediente_id: number;
+  nombre: string;
+  rut: string | null;
+  /** Quien firma por poder (opcional) */
+  apoderado_nombre: string | null;
+  apoderado_rut: string | null;
+};
 
 export type Item = {
   id: number;
@@ -75,6 +84,20 @@ export type Expediente = {
   fecha_respuesta: string | null;
   observaciones: string | null;
   notas: string | null;
+  // Viñeta del plano
+  sector: string | null;
+  provincia: string | null;
+  region: string | null;
+  inscripcion_fojas: string | null;
+  inscripcion_numero: string | null;
+  inscripcion_anio: string | null;
+  conservador: string | null;
+  plano_base: string | null;
+  lamina: string | null;
+  escala: number | null;
+  acceso_norte: number | null;
+  acceso_este: number | null;
+  huso: string | null;
   created_at: string;
   updated_at: string;
 };

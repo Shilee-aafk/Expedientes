@@ -4,7 +4,7 @@ import { createClient } from "./supabase/server";
 import type { Profile } from "./types";
 import { correoDe } from "./usuarios";
 
-const COLUMNAS_PERFIL = "id, usuario, nombre, rut, carnet_path, titulo_path, activo";
+const COLUMNAS_PERFIL = "id, usuario, nombre, rut, profesion, carnet_path, titulo_path, activo";
 
 /** Perfil del usuario con sesión (o null). Una sola consulta por petición. */
 export const usuarioActual = cache(async (): Promise<Profile | null> => {

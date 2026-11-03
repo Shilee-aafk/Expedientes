@@ -4,12 +4,21 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { borrarArchivos } from "@/lib/archivos";
 import * as repo from "@/lib/repo";
+import { leerNumero } from "@/lib/numeros";
 import { requireUser } from "@/lib/sesion";
 import { ESTADOS, type EstadoExpediente } from "@/lib/types";
 
 const texto = (f: FormData, k: string) => {
   const v = String(f.get(k) ?? "").trim();
   return v === "" ? null : v;
+};
+
+const numero = (f: FormData, k: string) => leerNumero(texto(f, k));
+const entero = (f: FormData, k: string) => {
+  const v = texto(f, k)?.replace(/^1\s*[:/]\s*/, "");
+  const n = leerNumero(v ?? null);
+  if (n !== null && (!Number.isInteger(n) || n <= 0)) throw new Error("La escala debe ser un número entero, por ejemplo 1000.");
+  return n;
 };
 
 /** Una línea por dueño: "Nombre, RUT" (el RUT es opcional). */
@@ -84,6 +93,19 @@ export async function guardarDatos(id: number, _: string | null, f: FormData) {
       fecha_respuesta: texto(f, "fecha_respuesta"),
       observaciones: texto(f, "observaciones"),
       notas: texto(f, "notas"),
+      sector: texto(f, "sector"),
+      provincia: texto(f, "provincia"),
+      region: texto(f, "region"),
+      inscripcion_fojas: texto(f, "inscripcion_fojas"),
+      inscripcion_numero: texto(f, "inscripcion_numero"),
+      inscripcion_anio: texto(f, "inscripcion_anio"),
+      conservador: texto(f, "conservador"),
+      plano_base: texto(f, "plano_base"),
+      lamina: texto(f, "lamina"),
+      escala: entero(f, "escala"),
+      acceso_norte: numero(f, "acceso_norte"),
+      acceso_este: numero(f, "acceso_este"),
+      huso: texto(f, "huso"),
     });
   } catch (e) {
     return (e as Error).message;
@@ -96,7 +118,22 @@ export async function agregarDueno(expedienteId: number, f: FormData) {
   await requireUser();
   const nombre = texto(f, "nombre");
   if (!nombre) return;
-  await repo.agregarDueno(expedienteId, nombre, texto(f, "rut"));
+  await repo.agregarDueno(expedienteId, datosDueno(f, nombre));
+  revalidatePath(`/expedientes/${expedienteId}`);
+}
+
+const datosDueno = (f: FormData, nombre: string) => ({
+  nombre,
+  rut: texto(f, "rut"),
+  apoderado_nombre: texto(f, "apoderado_nombre"),
+  apoderado_rut: texto(f, "apoderado_rut"),
+});
+
+export async function actualizarDueno(expedienteId: number, duenoId: number, f: FormData) {
+  await requireUser();
+  const nombre = texto(f, "nombre");
+  if (!nombre) return;
+  await repo.actualizarDueno(duenoId, datosDueno(f, nombre));
   revalidatePath(`/expedientes/${expedienteId}`);
 }
 

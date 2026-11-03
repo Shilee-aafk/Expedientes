@@ -8,7 +8,7 @@ import { createClient } from "./supabase/server";
 import type { Dueno, EstadoExpediente, EstadoItem, Expediente, Item, Profile, Requisito } from "./types";
 import { correoDe } from "./usuarios";
 
-const COLUMNAS_PERFIL = "id, usuario, nombre, rut, carnet_path, titulo_path, activo";
+const COLUMNAS_PERFIL = "id, usuario, nombre, rut, profesion, carnet_path, titulo_path, activo";
 
 /** Lanza el error de Supabase con un mensaje legible. */
 function revisar<T>(r: { data: T; error: { message: string } | null }): T {
@@ -59,7 +59,7 @@ export async function reactivarUsuario(id: string) {
   revisar(await supabase.rpc("reactivar_usuario", { p_id: id }));
 }
 
-export async function actualizarPerfil(id: string, d: { nombre: string; rut: string | null }) {
+export async function actualizarPerfil(id: string, d: { nombre: string; rut: string | null; profesion: string | null }) {
   const supabase = await createClient();
   revisar(await supabase.from("profiles").update(d).eq("id", id));
 }
@@ -210,17 +210,31 @@ export async function cambiarEstado(id: number, estado: EstadoExpediente): Promi
 
 export type DatosExpediente = Pick<
   Expediente,
-  "predio" | "rol_sii" | "comuna" | "tercero_autorizado" | "fecha_envio" | "fecha_respuesta" | "observaciones" | "notas"
+  "predio" | "rol_sii" | "comuna" | "tercero_autorizado" | "fecha_envio" | "fecha_respuesta" | "observaciones" | "notas" | CampoVineta
 >;
+
+/** Campos que usa la viñeta del plano (plugin de AutoCAD / Civil 3D) */
+export const CAMPOS_VINETA = [
+  "sector", "provincia", "region", "inscripcion_fojas", "inscripcion_numero", "inscripcion_anio",
+  "conservador", "plano_base", "lamina", "escala", "acceso_norte", "acceso_este", "huso",
+] as const;
+export type CampoVineta = (typeof CAMPOS_VINETA)[number];
 
 export async function guardarDatos(id: number, d: DatosExpediente) {
   const supabase = await createClient();
   revisar(await supabase.from("expedientes").update(d).eq("id", id));
 }
 
-export async function agregarDueno(expedienteId: number, nombre: string, rut: string | null) {
+export type DatosDueno = Pick<Dueno, "nombre" | "rut" | "apoderado_nombre" | "apoderado_rut">;
+
+export async function agregarDueno(expedienteId: number, d: DatosDueno) {
   const supabase = await createClient();
-  revisar(await supabase.from("duenos").insert({ expediente_id: expedienteId, nombre, rut }));
+  revisar(await supabase.from("duenos").insert({ ...d, expediente_id: expedienteId }));
+}
+
+export async function actualizarDueno(duenoId: number, d: DatosDueno) {
+  const supabase = await createClient();
+  revisar(await supabase.from("duenos").update(d).eq("id", duenoId));
 }
 
 export async function quitarDueno(duenoId: number) {

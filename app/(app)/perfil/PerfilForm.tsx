@@ -32,6 +32,10 @@ export function PerfilForm({ perfil }: { perfil: Profile }) {
           <label className="label" htmlFor="rut">RUT</label>
           <input className="input" id="rut" name="rut" defaultValue={perfil.rut ?? ""} />
         </div>
+        <div>
+          <label className="label" htmlFor="profesion">Profesión (para la viñeta de los planos)</label>
+          <input className="input" id="profesion" name="profesion" defaultValue={perfil.profesion ?? ""} placeholder="Técnico de nivel superior en topografía" />
+        </div>
         <div className="flex items-center gap-3">
           <button className="btn-primary" disabled={enviando}>Guardar</button>
           <Mensaje mensaje={mensaje} />

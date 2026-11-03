@@ -11,7 +11,7 @@ export async function guardarPerfil(_: string | null, f: FormData) {
   const nombre = texto(f, "nombre");
   if (!nombre) return "Falta el nombre.";
   try {
-    await repo.actualizarPerfil(user.id, { nombre, rut: texto(f, "rut") || null });
+    await repo.actualizarPerfil(user.id, { nombre, rut: texto(f, "rut") || null, profesion: texto(f, "profesion") || null });
   } catch (e) {
     return (e as Error).message;
   }

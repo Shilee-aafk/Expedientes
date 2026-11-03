@@ -103,6 +103,26 @@ create table if not exists public.historial (
 );
 create index if not exists historial_expediente on public.historial (expediente_id, created_at desc);
 
+-- ─── Datos de la viñeta del plano (plugin de AutoCAD / Civil 3D) ────
+alter table public.expedientes
+  add column if not exists sector text,
+  add column if not exists provincia text,
+  add column if not exists region text,
+  add column if not exists inscripcion_fojas text,
+  add column if not exists inscripcion_numero text,
+  add column if not exists inscripcion_anio text,
+  add column if not exists conservador text,
+  add column if not exists plano_base text,
+  add column if not exists lamina text,
+  add column if not exists escala int check (escala > 0),
+  add column if not exists acceso_norte numeric,
+  add column if not exists acceso_este numeric,
+  add column if not exists huso text;
+alter table public.duenos
+  add column if not exists apoderado_nombre text,
+  add column if not exists apoderado_rut text;
+alter table public.profiles add column if not exists profesion text;
+
 -- La primera versión usaba "generated always": se pasa a "by default" para poder
 -- importar los datos locales conservando sus números (y las rutas de sus archivos)
 do $$
