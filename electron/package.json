@@ -1,7 +1,7 @@
 {
   "name": "expedientes-spr",
   "productName": "Expedientes SPR",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Checklist de expedientes de subdivisión para terceros autorizados",
   "author": "Sánchez Paz Proyectos y Servicios",
   "main": "main.cjs",
