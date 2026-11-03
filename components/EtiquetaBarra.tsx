@@ -5,8 +5,8 @@
  */
 export function EtiquetaBarra({ texto }: { texto: string }) {
   return (
-    <span aria-hidden className="etiqueta-barra pointer-events-none absolute top-1/2 left-12 flex h-10 -translate-y-1/2 items-center whitespace-nowrap">
-      <span className="etiqueta-texto relative pr-5 pl-6 text-[0.95rem] font-medium text-text">{texto}</span>
+    <span aria-hidden className="etiqueta-barra pointer-events-none absolute top-1/2 left-12 flex h-12 -translate-y-1/2 items-center whitespace-nowrap">
+      <span className="etiqueta-texto relative pr-6 pl-6 text-[0.95rem] font-medium text-text">{texto}</span>
     </span>
   );
 }
