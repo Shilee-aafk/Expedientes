@@ -49,7 +49,7 @@ namespace ExpedientesSPR
             try
             {
                 AcApp.DocumentManager.MdiActiveDocument?.Editor.WriteMessage(
-                    $"\nExpedientes SPR {Version} cargado. Comandos: SPR_INGRESAR, SPR_EXPEDIENTE, SPR_VINETA, SPR_SALIR.\n");
+                    $"\nExpedientes SPR {Version} cargado. Comandos: SPR_INGRESAR, SPR_EXPEDIENTE, SPR_VINETA, SPR_LOTES, SPR_CUADRO, SPR_SALIR.\n");
             }
             catch (System.Exception) { /* sin documento abierto */ }
         }

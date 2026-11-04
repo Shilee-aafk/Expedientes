@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -12,6 +13,7 @@ namespace ExpedientesSPR
     public sealed class Comandos
     {
         const string BloqueVineta = "SPR_VINETA";
+        const string BloqueCuadro = "SPR_CUADRO";
         const string ClaveDibujo = "EXPEDIENTES_SPR";
 
         static Document Doc => AcApp.DocumentManager.MdiActiveDocument;
@@ -43,28 +45,140 @@ namespace ExpedientesSPR
         public void Expediente() => Ejecutar("SPR_EXPEDIENTE", () => ElegirExpediente());
 
         [CommandMethod("SPR_VINETA")]
-        public void Vineta() => Ejecutar("SPR_VINETA", () =>
+        public void Vineta() => Ejecutar("SPR_VINETA", () => HacerVineta(false));
+
+        /// <summary>Recalcula el cuadro de superficie con los lotes del dibujo (dentro de la viñeta, o suelto si no hay viñeta).</summary>
+        [CommandMethod("SPR_CUADRO")]
+        public void CuadroSuperficie() => Ejecutar("SPR_CUADRO", () =>
+        {
+            var db = Doc.Database;
+            int vinetas;
+            using (var tr = db.TransactionManager.StartOpenCloseTransaction()) vinetas = Referencias(tr, db);
+            if (vinetas > 0)
+            {
+                HacerVineta(true);
+                return;
+            }
+            var avisos = new List<string>();
+            List<Lote> lotes;
+            using (var tr = db.TransactionManager.StartOpenCloseTransaction()) lotes = Lotes.Todos(tr, db, avisos);
+            if (lotes.Count == 0) throw new ErrorUsuario("No hay lotes marcados. Primero usa SPR_LOTES para indicar las polilíneas de los lotes.");
+            var dib = Nucleo.Cuadro.Generar(lotes, new OpcionesVineta());
+            using (Doc.LockDocument())
+            using (var tr = db.TransactionManager.StartTransaction())
+            {
+                var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
+                var existe = bt.Has(BloqueCuadro);
+                var bloque = Dibujar.DefinirBloque(tr, db, BloqueCuadro, dib);
+                if (!existe || Referencias(tr, db, BloqueCuadro) == 0)
+                {
+                    var res = Ed.GetPoint(new PromptPointOptions("\nEsquina superior izquierda del cuadro de superficie: "));
+                    if (res.Status != PromptStatus.OK) return;
+                    var enModelo = db.TileMode || db.CurrentSpaceId == SymbolUtilityServices.GetBlockModelSpaceId(db);
+                    var escalaPlano = EscalaGuardada() ?? 1000;
+                    Dibujar.Insertar(tr, db, db.CurrentSpaceId, bloque, res.Value.TransformBy(Ed.CurrentUserCoordinateSystem), enModelo ? escalaPlano / 1000.0 : 1.0);
+                }
+                else ActualizarReferencias(tr, db, BloqueCuadro);
+                tr.Commit();
+            }
+            Ed.Regen();
+            InformarLotes(lotes, avisos);
+        });
+
+        /// <summary>Marca polilíneas cerradas como lotes: nombre, servidumbre (opcional) y su ancho.</summary>
+        [CommandMethod("SPR_LOTES")]
+        public void MarcarLotes() => Ejecutar("SPR_LOTES", () =>
+        {
+            var db = Doc.Database;
+            if (db.Insunits != UnitsValue.Meters && db.Insunits != UnitsValue.Undefined)
+                Ed.WriteMessage($"\nOjo: las unidades del dibujo son «{db.Insunits}». Las superficies se calculan suponiendo metros.");
+            string ultimo = null;
+            double anchoAnterior = 6;
+            var n = 0;
+            while (true)
+            {
+                var pe = new PromptEntityOptions("\nSelecciona el borde de un lote (polilínea cerrada) o Enter para terminar: ") { AllowNone = true };
+                pe.SetRejectMessage("\nDebe ser una polilínea.");
+                pe.AddAllowedClass(typeof(Polyline), true);
+                var r = Ed.GetEntity(pe);
+                if (r.Status != PromptStatus.OK) break;
+
+                using (Doc.LockDocument())
+                using (var tr = db.TransactionManager.StartTransaction())
+                {
+                    var pl = (Polyline)tr.GetObject(r.ObjectId, OpenMode.ForRead);
+                    if (!Lotes.Cerrada(pl)) Ed.WriteMessage("\nAviso: la polilínea no está cerrada; ciérrala (propiedad «Cerrada») para que la superficie sea la correcta.");
+                    pl.Highlight();
+                    try
+                    {
+                        var previo = Lotes.Leer(pl);
+                        var sugerido = previo?.Nombre ?? Lotes.Siguiente(ultimo);
+                        var ps = new PromptStringOptions($"\nNombre del lote <{sugerido}>: ") { AllowSpaces = true };
+                        var rn = Ed.GetString(ps);
+                        if (rn.Status != PromptStatus.OK) return;
+                        var nombre = string.IsNullOrWhiteSpace(rn.StringResult) ? sugerido : rn.StringResult.Trim();
+
+                        var psv = new PromptEntityOptions($"\nPolilínea de la servidumbre dentro de «{nombre}» o Enter si no tiene: ") { AllowNone = true };
+                        psv.SetRejectMessage("\nDebe ser una polilínea.");
+                        psv.AddAllowedClass(typeof(Polyline), true);
+                        var rs = Ed.GetEntity(psv);
+                        if (rs.Status == PromptStatus.Cancel) return;
+                        Polyline serv = null;
+                        double? ancho = null;
+                        if (rs.Status == PromptStatus.OK)
+                        {
+                            if (rs.ObjectId == r.ObjectId) throw new ErrorUsuario("La servidumbre debe ser otra polilínea, no el borde del lote.");
+                            serv = (Polyline)tr.GetObject(rs.ObjectId, OpenMode.ForRead);
+                            var pd = new PromptDoubleOptions($"\nAncho de la servidumbre en metros <{Nucleo.Cuadro.Metros(previo?.Ancho ?? anchoAnterior)}>: ")
+                            {
+                                AllowNone = true, AllowNegative = false, AllowZero = false, DefaultValue = previo?.Ancho ?? anchoAnterior, UseDefaultValue = true,
+                            };
+                            var ra = Ed.GetDouble(pd);
+                            if (ra.Status != PromptStatus.OK) return;
+                            ancho = anchoAnterior = ra.Value;
+                        }
+                        Lotes.Guardar(tr, db, pl, nombre, serv, ancho);
+                        tr.Commit();
+                        ultimo = nombre;
+                        n++;
+                        Ed.WriteMessage($"\n{nombre}: {Nucleo.Cuadro.Hectareas(pl.Area)} ha" +
+                                        (serv != null ? $", servidumbre {Nucleo.Cuadro.Hectareas(serv.Area)} ha ({Nucleo.Cuadro.Metros(ancho ?? 0)})" : "") + ".");
+                    }
+                    finally { pl.Unhighlight(); }
+                }
+            }
+            if (n > 0) Ed.WriteMessage($"\n{n} lote(s) marcados. Ejecuta SPR_CUADRO para actualizar el cuadro de superficie.\n");
+        });
+
+        static void HacerVineta(bool soloActualizar)
         {
             var guardado = Leer();
             var id = guardado.id ?? ElegirExpediente();
             if (id == null) return;
             var datos = Aplicacion.Cliente.CargarExpediente(id.Value);
 
-            // Formato y sello: se recuerdan en el dibujo
-            var formato = Opcion("Formato de la hoja", new[] { "A0", "A1", "A2", "A3" }, guardado.formato ?? "A0");
+            // Formato y sello: se recuerdan en el dibujo (al actualizar el cuadro no se preguntan)
+            var formato = soloActualizar ? guardado.formato ?? "A0" : Opcion("Formato de la hoja", new[] { "A0", "A1", "A2", "A3" }, guardado.formato ?? "A0");
             if (formato == null) return;
-            var sello = Opcion("¿Incluir el recuadro \"Sello aprobación proyecto\"?", new[] { "Si", "No" }, guardado.sello == false ? "No" : "Si");
+            var sello = soloActualizar
+                ? (guardado.sello == false ? "No" : "Si")
+                : Opcion("¿Incluir el recuadro \"Sello aprobación proyecto\"?", new[] { "Si", "No" }, guardado.sello == false ? "No" : "Si");
             if (sello == null) return;
             var op = new OpcionesVineta { Formato = Nucleo.Formato.Buscar(formato), SelloAprobacion = sello == "Si" };
-            var dib = Nucleo.Vineta.Generar(datos, op);
 
             var db = Doc.Database;
+            var avisos = new List<string>();
+            List<Lote> lotes;
+            using (var tr0 = db.TransactionManager.StartOpenCloseTransaction()) lotes = Lotes.Todos(tr0, db, avisos);
+            var dib = Nucleo.Vineta.Generar(datos, op, lotes.Count > 0 ? lotes : null);
+
             using (Doc.LockDocument())
             using (var tr = db.TransactionManager.StartTransaction())
             {
                 var existentes = Referencias(tr, db);
                 var nueva = true;
-                if (existentes > 0)
+                if (soloActualizar) nueva = false;
+                else if (existentes > 0)
                 {
                     var r = Opcion($"Ya hay {existentes} viñeta(s) en el dibujo. ¿Qué hago?", new[] { "Actualizar", "Nueva" }, "Actualizar");
                     if (r == null) return;
@@ -92,7 +206,7 @@ namespace ExpedientesSPR
                 {
                     ActualizarReferencias(tr, db);
                 }
-                Guardar(tr, db, datos.Id, datos.Codigo, formato, sello == "Si");
+                Guardar(tr, db, datos.Id, datos.Codigo, formato, sello == "Si", datos.Escala);
                 tr.Commit();
             }
             Ed.Regen();
@@ -100,8 +214,18 @@ namespace ExpedientesSPR
             if (dib.Faltantes.Count > 0)
                 Ed.WriteMessage("\nFaltan datos en la app (quedaron en blanco): " + string.Join(", ", dib.Faltantes) +
                                 ".\nComplétalos en el expediente y vuelve a ejecutar SPR_VINETA → Actualizar.");
+            if (lotes.Count == 0) Ed.WriteMessage("\nSin cuadro de superficie: marca los lotes con SPR_LOTES y luego ejecuta SPR_CUADRO.");
+            else InformarLotes(lotes, avisos);
             Ed.WriteMessage("\n");
-        });
+        }
+
+        static void InformarLotes(List<Lote> lotes, List<string> avisos)
+        {
+            var total = 0.0;
+            foreach (var l in lotes) total += l.Superficie;
+            Ed.WriteMessage($"\nCuadro de superficie: {lotes.Count} lote(s), total {Nucleo.Cuadro.Hectareas(total)} ha.");
+            foreach (var a in avisos) Ed.WriteMessage("\nAviso: " + a);
+        }
 
         sealed class Point3dResultado { public Autodesk.AutoCAD.Geometry.Point3d Punto; }
 
@@ -148,21 +272,21 @@ namespace ExpedientesSPR
             return r.Status == PromptStatus.OK ? r.StringResult : null;
         }
 
-        static int Referencias(Transaction tr, Database db)
+        static int Referencias(Transaction tr, Database db, string nombre = BloqueVineta)
         {
             var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
-            if (!bt.Has(BloqueVineta)) return 0;
-            var btr = (BlockTableRecord)tr.GetObject(bt[BloqueVineta], OpenMode.ForRead);
+            if (!bt.Has(nombre)) return 0;
+            var btr = (BlockTableRecord)tr.GetObject(bt[nombre], OpenMode.ForRead);
             var n = 0;
             foreach (ObjectId id in btr.GetBlockReferenceIds(true, false))
                 if (!tr.GetObject(id, OpenMode.ForRead).IsErased) n++;
             return n;
         }
 
-        static void ActualizarReferencias(Transaction tr, Database db)
+        static void ActualizarReferencias(Transaction tr, Database db, string nombre = BloqueVineta)
         {
             var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
-            var btr = (BlockTableRecord)tr.GetObject(bt[BloqueVineta], OpenMode.ForRead);
+            var btr = (BlockTableRecord)tr.GetObject(bt[nombre], OpenMode.ForRead);
             foreach (ObjectId id in btr.GetBlockReferenceIds(true, false))
             {
                 var br = (BlockReference)tr.GetObject(id, OpenMode.ForWrite);
@@ -188,11 +312,30 @@ namespace ExpedientesSPR
             }
         }
 
-        static void Guardar(Transaction tr, Database db, long id, string codigo, string formato, bool? sello)
+        /// <summary>Escala del plano guardada al hacer la viñeta (para insertar en el modelo).</summary>
+        static int? EscalaGuardada()
+        {
+            var db = Doc.Database;
+            using (var tr = db.TransactionManager.StartOpenCloseTransaction())
+            {
+                var nod = (DBDictionary)tr.GetObject(db.NamedObjectsDictionaryId, OpenMode.ForRead);
+                if (!nod.Contains(ClaveDibujo)) return null;
+                var v = (tr.GetObject(nod.GetAt(ClaveDibujo), OpenMode.ForRead) as Xrecord)?.Data?.AsArray();
+                return v != null && v.Length > 4 && int.TryParse(Convert.ToString(v[4].Value), out var e) && e > 0 ? e : (int?)null;
+            }
+        }
+
+        static void Guardar(Transaction tr, Database db, long id, string codigo, string formato, bool? sello, int? escala = null)
         {
             var nod = (DBDictionary)tr.GetObject(db.NamedObjectsDictionaryId, OpenMode.ForWrite);
             Xrecord xr;
-            if (nod.Contains(ClaveDibujo)) xr = (Xrecord)tr.GetObject(nod.GetAt(ClaveDibujo), OpenMode.ForWrite);
+            if (nod.Contains(ClaveDibujo))
+            {
+                xr = (Xrecord)tr.GetObject(nod.GetAt(ClaveDibujo), OpenMode.ForWrite);
+                // Sin escala nueva se conserva la que había
+                var v = xr.Data?.AsArray();
+                if (escala == null && v != null && v.Length > 4 && int.TryParse(Convert.ToString(v[4].Value), out var e) && e > 0) escala = e;
+            }
             else
             {
                 xr = new Xrecord();
@@ -203,7 +346,8 @@ namespace ExpedientesSPR
                 new TypedValue((int)DxfCode.Text, id.ToString(CultureInfo.InvariantCulture)),
                 new TypedValue((int)DxfCode.Text, codigo ?? ""),
                 new TypedValue((int)DxfCode.Text, formato ?? ""),
-                new TypedValue((int)DxfCode.Text, sello == false ? "0" : "1"));
+                new TypedValue((int)DxfCode.Text, sello == false ? "0" : "1"),
+                new TypedValue((int)DxfCode.Text, escala?.ToString(CultureInfo.InvariantCulture) ?? ""));
         }
     }
 }

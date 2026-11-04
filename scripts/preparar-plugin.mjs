@@ -41,6 +41,8 @@ const componente = (serie, min, max, descripcion) => `
         <Command Global="SPR_INGRESAR" Local="SPR_INGRESAR" />
         <Command Global="SPR_EXPEDIENTE" Local="SPR_EXPEDIENTE" />
         <Command Global="SPR_VINETA" Local="SPR_VINETA" />
+        <Command Global="SPR_LOTES" Local="SPR_LOTES" />
+        <Command Global="SPR_CUADRO" Local="SPR_CUADRO" />
         <Command Global="SPR_SALIR" Local="SPR_SALIR" />
       </Commands>
     </ComponentEntry>

@@ -51,7 +51,8 @@ namespace ExpedientesSPR.Nucleo
             public string Texto => Valor == null ? Etiqueta : $"{Etiqueta} {Valor}";
         }
 
-        public static Dibujo Generar(DatosPlano d, OpcionesVineta op)
+        /// <param name="lotes">Lotes del dibujo: si hay, el cuadro de superficie va dentro de la viñeta (bajo la lámina).</param>
+        public static Dibujo Generar(DatosPlano d, OpcionesVineta op, IEnumerable<Lote> lotes = null)
         {
             var dib = new Dibujo { Ancho = op.Ancho };
             var filas = new List<Celda[]>();
@@ -108,6 +109,8 @@ namespace ExpedientesSPR.Nucleo
                 y -= alto;
                 dib.Linea(0, y, w, y);
             }
+
+            if (lotes != null) y = Cuadro.Agregar(dib, y, w, h, lotes);
 
             // Empresa responsable con el logo
             var altoEmpresa = op.AltoLogo + 22;

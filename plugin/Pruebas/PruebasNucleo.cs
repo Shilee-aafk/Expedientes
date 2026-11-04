@@ -233,7 +233,8 @@ public class VistaPrevia
         var ruta = Environment.GetEnvironmentVariable("VINETA_SVG");
         if (string.IsNullOrEmpty(ruta)) return;
         var datos = (DatosPlano)typeof(PruebasVineta).GetMethod("Ejemplo", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static).Invoke(null, null);
-        var d = Vineta.Generar(datos, new OpcionesVineta());
+        var lotes = (List<Lote>)typeof(PruebasCuadro).GetMethod("Lotes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static).Invoke(null, null);
+        var d = Vineta.Generar(datos, new OpcionesVineta(), lotes);
         var inv = System.Globalization.CultureInfo.InvariantCulture;
         var sb = new StringBuilder($"<svg xmlns='http://www.w3.org/2000/svg' viewBox='-5 -5 {d.Ancho + 10} {d.Alto + 10}' width='{(d.Ancho + 10) * 4}' style='background:#fff;font-family:Arial'>");
         foreach (var e in d.Elementos)
@@ -246,7 +247,7 @@ public class VistaPrevia
                 if (t.Ancho > 0)
                 {
                     var porLinea = (int)(t.Ancho / (t.Altura * 0.75)); var act = "";
-                    foreach (var p in t.Contenido.Split(' ')) { if (act.Length > 0 && act.Length + 1 + p.Length > porLinea) { lineas.Add(act); act = p; } else act = act.Length == 0 ? p : act + " " + p; }
+                    foreach (var p in t.Contenido.Replace("\n", " \n ").Split(' ')) { if (p == "\n") { lineas.Add(act); act = ""; continue; } if (act.Length > 0 && act.Length + 1 + p.Length > porLinea) { lineas.Add(act); act = p; } else act = act.Length == 0 ? p : act + " " + p; }
                     lineas.Add(act);
                 }
                 else lineas.Add(t.Contenido);
@@ -257,5 +258,64 @@ public class VistaPrevia
             }
         }
         File.WriteAllText(ruta, sb.Append("</svg>").ToString());
+    }
+}
+
+public class PruebasCuadro
+{
+    // Lotes del plano de Belisario Mancilla (lámina A)
+    static List<Lote> Lotes() => new List<Lote>
+    {
+        new Lote { Nombre = "Lote b-12", Superficie = 5300, Servidumbre = 298, AnchoServidumbre = 6 },
+        new Lote { Nombre = "Lote b", Superficie = 122923, Servidumbre = 3208, AnchoServidumbre = 6 },
+        new Lote { Nombre = "Lote b-5-2", Superficie = 5000, Servidumbre = 119, AnchoServidumbre = 3 },
+        new Lote { Nombre = "Lote b-13", Superficie = 5277 },
+        new Lote { Nombre = "Lote b-5", Superficie = 5000, Servidumbre = 126, AnchoServidumbre = 3 },
+        new Lote { Nombre = "Lote b-8", Superficie = 10000, Servidumbre = 185, AnchoServidumbre = 3 },
+    };
+
+    [Fact]
+    public void OrdenNaturalDeLosLotes() =>
+        Assert.Equal(new[] { "Lote b", "Lote b-5", "Lote b-5-2", "Lote b-8", "Lote b-12", "Lote b-13" }, Cuadro.Ordenar(Lotes()).Select(l => l.Nombre));
+
+    [Fact]
+    public void FormatoChileno()
+    {
+        Assert.Equal("12,2923", Cuadro.Hectareas(122923));
+        Assert.Equal("0,0298", Cuadro.Hectareas(298));
+        Assert.Equal("1.234,5679", Cuadro.Hectareas(12345678.9));
+        Assert.Equal("6 m", Cuadro.Metros(6));
+        Assert.Equal("2,5 m", Cuadro.Metros(2.5));
+    }
+
+    [Fact]
+    public void FilasYTotalesComoElPlano()
+    {
+        var d = Cuadro.Generar(Lotes(), new OpcionesVineta());
+        var t = d.Elementos.OfType<Texto>().Select(x => x.Contenido).ToList();
+        Assert.Equal("CUADRO DE SUPERFICIE", t[0]);
+        Assert.Contains("NOMBRE DEL\nLOTE RESULTANTE", t);
+        // Lote b: 12,2923 · 0,3208 · 6 m (igual que la lámina)
+        var i = t.IndexOf("Lote b");
+        Assert.Equal(new[] { "12,2923", "0,3208", "6 m" }, t.Skip(i + 1).Take(3));
+        // Lote sin servidumbre
+        i = t.IndexOf("Lote b-13");
+        Assert.Equal(new[] { "0,5277", "---", "---" }, t.Skip(i + 1).Take(3));
+        // Total: 15,3500 ha y 0,3936 ha de servidumbre (la lámina dice 15,35 y 0,3936)
+        i = t.IndexOf("TOTAL\nSUPERFICIE");
+        Assert.Equal(new[] { "15,3500", "0,3936", "---" }, t.Skip(i + 1).Take(3));
+        Assert.True(d.Alto > 80);
+    }
+
+    [Fact]
+    public void DentroDeLaVineta()
+    {
+        var datos = new DatosPlano { Predio = "Hijuela 2 Lote b", Profesional = new Profesional { Nombre = "J" } };
+        var con = Vineta.Generar(datos, new OpcionesVineta(), Lotes());
+        var sin = Vineta.Generar(datos, new OpcionesVineta());
+        var t = con.Elementos.OfType<Texto>().Select(x => x.Contenido).ToList();
+        Assert.True(t.IndexOf("CUADRO DE SUPERFICIE") > t.IndexOf("LÁMINA: A"));
+        Assert.True(t.IndexOf("CUADRO DE SUPERFICIE") < t.IndexOf("EMPRESA RESPONSABLE"));
+        Assert.True(con.Alto > sin.Alto + 80);
     }
 }
