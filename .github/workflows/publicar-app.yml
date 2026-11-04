@@ -53,7 +53,9 @@ jobs:
       - uses: actions/setup-dotnet@v4
         if: steps.version.outputs.publicar == 'si'
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: |
+            8.0.x
+            10.0.x
 
       - name: Instalar dependencias
         if: steps.version.outputs.publicar == 'si'

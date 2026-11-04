@@ -16,7 +16,9 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: |
+            8.0.x
+            10.0.x
       - name: Pruebas
         run: dotnet test plugin/Pruebas --nologo
       - name: Compilar (AutoCAD 2021-2024 y 2025-2026)

@@ -45,7 +45,7 @@ export function PluginAutocad({ url, anonKey }: { url: string; anonKey: string }
         </button>
       </div>
       <p className="text-xs text-muted">
-        Sirve para AutoCAD y Civil 3D 2021 a 2026. Dentro del programa: <b>SPR_INGRESAR</b> (con tu usuario de la app),{" "}
+        Sirve para AutoCAD y Civil 3D 2021 a 2027. Dentro del programa: <b>SPR_INGRESAR</b> (con tu usuario de la app),{" "}
         <b>SPR_EXPEDIENTE</b> y <b>SPR_VINETA</b>.
       </p>
       {mensaje && <p className={`animar-entrada text-sm ${mensaje.ok ? "text-ok" : "text-danger"}`}>{mensaje.texto}</p>}
