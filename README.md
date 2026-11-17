@@ -15,7 +15,7 @@ App para controlar el checklist de los expedientes de **subdivisión de predios 
 - **Mapa de predios** (menú *Mapa*): todos los KMZ juntos, coloreados por estado, con leyenda para mostrar u ocultar cada estado.
 - **Agenda de terreno** (menú *Agenda*): salidas por semana con expediente, horario, quiénes van y qué equipos llevan; avisa choques de personas o equipos. Al volver se marca *Realizada* con notas y fotos, y queda en el historial del expediente. Los equipos se mantienen en la misma página.
 - Contraseña temporal para otra persona del equipo (*Mi perfil → Equipo → Contraseña*), si olvidó la suya.
-- Visita automática a Supabase cada 3 días (`.github/workflows/mantener-supabase.yml`) para que el plan gratis no pause el proyecto.
+- Visita automática a Supabase todos los días (`.github/workflows/mantener-supabase.yml`) para que el plan gratis no pause el proyecto; si el repositorio pasa 40 días sin cambios, registra actividad para que GitHub no apague la tarea.
 - Usuarios con nombre de usuario y contraseña (cuentas de Supabase). Quitar a alguien del equipo lo **desactiva**: nunca se borra, y su nombre sigue en el historial.
 
 Stack: Next.js 15 + Tailwind 4 + Supabase (Auth, Postgres con RLS, Storage) + Electron para la app de Windows.
