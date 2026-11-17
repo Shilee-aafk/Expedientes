@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { MapaKmz } from "@/components/MapaKmz";
+import { TarjetaSalida } from "@/components/TarjetaSalida";
+import { nombreDia } from "@/lib/agenda";
 import { EstadoBadge, Progreso } from "@/components/ui";
 import { hoyChile, resumen } from "@/lib/checklist";
 import { cargarExpediente } from "@/lib/datos";
 import { formatoFechaHora } from "@/lib/formato";
 import { plazo } from "@/lib/plazos";
-import { listarKmz } from "@/lib/repo";
+import { listarKmz, listarSalidas } from "@/lib/repo";
 import { Checklist } from "./Checklist";
 import { DatosForm } from "./DatosForm";
 import { Duenos } from "./Duenos";
@@ -17,6 +19,8 @@ export default async function ExpedientePage({ params }: { params: Promise<{ id:
   const hoy = hoyChile();
   const r = resumen(items, duenos.length, hoy);
   const p = plazo(expediente, hoy);
+  // Salidas a terreno del expediente (si la base aún no tiene la agenda, no hay)
+  const salidas = await listarSalidas({ expedienteId: id }).catch(() => []);
   // El KMZ/KML adjunto (normalmente en "Pendrive con KMZ") se muestra en el mapa
   const kmz = items.find((i) => i.archivo_path && /\.(kmz|kml)$/i.test(i.archivo_path))?.archivo_path ?? null;
   // Los KMZ de los demás expedientes se ven de fondo en el mapa
@@ -70,8 +74,28 @@ export default async function ExpedientePage({ params }: { params: Promise<{ id:
           )}
         </section>
 
-        <aside className="space-y-4 [&>*]:cascada [&>*:nth-child(2)]:[--i:2] [&>*:nth-child(3)]:[--i:4] [&>*:nth-child(4)]:[--i:6]">
+        <aside className="space-y-4 [&>*]:cascada [&>*:nth-child(2)]:[--i:2] [&>*:nth-child(3)]:[--i:4] [&>*:nth-child(4)]:[--i:6] [&>*:nth-child(5)]:[--i:8]">
           <EstadoAcciones id={id} estado={expediente.estado} listoParaEnviar={r.listoParaEnviar} />
+          <div className="card space-y-2 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-semibold">Terreno</h2>
+              <Link href={`/agenda/nueva?expediente=${id}`} className="btn-secondary px-3 py-1 text-xs">
+                Programar salida
+              </Link>
+            </div>
+            {salidas.length === 0 ? (
+              <p className="text-sm text-muted">Sin salidas a terreno.</p>
+            ) : (
+              <ul className="space-y-2">
+                {salidas.map((s) => (
+                  <li key={s.id}>
+                    <div className="mb-0.5 text-xs text-muted first-letter:uppercase">{nombreDia(s.fecha)}</div>
+                    <TarjetaSalida s={s} compacta />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <Duenos expedienteId={id} duenos={duenos} />
           <DatosForm expediente={expediente} />
           <div className="card p-4">

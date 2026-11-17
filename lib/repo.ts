@@ -3,6 +3,7 @@
  * activos) las aplica la base con RLS; el código, el checklist y el historial los
  * generan triggers (ver supabase/esquema.sql).
  */
+import type { ArchivoSalida, Equipo, EstadoSalida, Salida } from "./agenda";
 import { hoyChile, requiereChecklistCompleto, resumen } from "./checklist";
 import { createClient } from "./supabase/server";
 import type { Dueno, EstadoExpediente, EstadoItem, Expediente, Item, Profile, Requisito } from "./types";
@@ -276,4 +277,120 @@ export async function eliminarExpediente(id: number): Promise<string[]> {
   const items = revisar(await supabase.from("expediente_items").select("archivo_path").eq("expediente_id", id)) as { archivo_path: string | null }[];
   revisar(await supabase.from("expedientes").delete().eq("id", id));
   return items.map((i) => i.archivo_path).filter((p): p is string => !!p && p.startsWith(`expedientes/${id}/`));
+}
+
+// ─── Agenda de terreno ───────────────────────────────────────────────
+
+export async function listarEquipos(incluirInactivos = false): Promise<Equipo[]> {
+  const supabase = await createClient();
+  let q = supabase.from("equipos").select("id, nombre, tipo, activo").order("nombre");
+  if (!incluirInactivos) q = q.eq("activo", true);
+  return revisar(await q) as Equipo[];
+}
+
+export async function guardarEquipo(d: { id?: number; nombre: string; tipo: string }) {
+  const supabase = await createClient();
+  if (d.id) revisar(await supabase.from("equipos").update({ nombre: d.nombre, tipo: d.tipo }).eq("id", d.id));
+  else revisar(await supabase.from("equipos").insert({ nombre: d.nombre, tipo: d.tipo }));
+}
+
+export async function cambiarActivoEquipo(id: number, activo: boolean) {
+  const supabase = await createClient();
+  revisar(await supabase.from("equipos").update({ activo }).eq("id", id));
+}
+
+const COLUMNAS_SALIDA =
+  "id, expediente_id, titulo, fecha, hora_inicio, hora_fin, estado, notas, resultado, expediente:expedientes(codigo, predio), personas:salida_personas(profile:profiles(id, nombre)), equipos:salida_equipos(equipo:equipos(id, nombre))";
+
+type FilaSalida = Omit<Salida, "personas" | "equipos"> & {
+  personas: { profile: { id: string; nombre: string } | null }[];
+  equipos: { equipo: { id: number; nombre: string } | null }[];
+};
+
+const aSalida = (f: FilaSalida): Salida => ({
+  ...f,
+  personas: f.personas.map((p) => p.profile).filter((p): p is { id: string; nombre: string } => !!p).sort((a, b) => a.nombre.localeCompare(b.nombre)),
+  equipos: f.equipos.map((e) => e.equipo).filter((e): e is { id: number; nombre: string } => !!e).sort((a, b) => a.nombre.localeCompare(b.nombre)),
+});
+
+/** Salidas entre dos fechas (incluidas), por fecha y hora. */
+export async function listarSalidas(filtro: { desde?: string; hasta?: string; expedienteId?: number; estado?: string; antesDe?: string }): Promise<Salida[]> {
+  const supabase = await createClient();
+  let q = supabase.from("salidas").select(COLUMNAS_SALIDA).order("fecha").order("hora_inicio", { nullsFirst: true });
+  if (filtro.desde) q = q.gte("fecha", filtro.desde);
+  if (filtro.hasta) q = q.lte("fecha", filtro.hasta);
+  if (filtro.antesDe) q = q.lt("fecha", filtro.antesDe);
+  if (filtro.expedienteId) q = q.eq("expediente_id", filtro.expedienteId);
+  if (filtro.estado) q = q.eq("estado", filtro.estado);
+  return (revisar(await q) as unknown as FilaSalida[]).map(aSalida);
+}
+
+export async function cargarSalida(id: number): Promise<{ salida: Salida; archivos: ArchivoSalida[] } | null> {
+  const supabase = await createClient();
+  const [s, a] = await Promise.all([
+    supabase.from("salidas").select(COLUMNAS_SALIDA).eq("id", id).maybeSingle(),
+    supabase.from("salida_archivos").select("id, ruta, nombre, created_at").eq("salida_id", id).order("created_at"),
+  ]);
+  const fila = revisar(s) as unknown as FilaSalida | null;
+  if (!fila) return null;
+  return { salida: aSalida(fila), archivos: revisar(a) as ArchivoSalida[] };
+}
+
+export type DatosSalida = {
+  expediente_id: number | null;
+  titulo: string | null;
+  fecha: string;
+  hora_inicio: string | null;
+  hora_fin: string | null;
+  notas: string | null;
+};
+
+/** Crea o actualiza una salida con sus personas y equipos. Devuelve su id. */
+export async function guardarSalida(id: number | null, d: DatosSalida, personas: string[], equipos: number[]): Promise<number> {
+  const supabase = await createClient();
+  let sid = id;
+  if (sid) revisar(await supabase.from("salidas").update(d).eq("id", sid));
+  else sid = (revisar(await supabase.from("salidas").insert(d).select("id").single()) as { id: number }).id;
+  revisar(await supabase.from("salida_personas").delete().eq("salida_id", sid));
+  revisar(await supabase.from("salida_equipos").delete().eq("salida_id", sid));
+  if (personas.length) revisar(await supabase.from("salida_personas").insert(personas.map((p) => ({ salida_id: sid, profile_id: p }))));
+  if (equipos.length) revisar(await supabase.from("salida_equipos").insert(equipos.map((e) => ({ salida_id: sid, equipo_id: e }))));
+  return sid;
+}
+
+export async function cambiarEstadoSalida(id: number, estado: EstadoSalida, resultado?: string | null) {
+  const supabase = await createClient();
+  const cambio: { estado: EstadoSalida; resultado?: string | null } = { estado };
+  if (resultado !== undefined) cambio.resultado = resultado;
+  revisar(await supabase.from("salidas").update(cambio).eq("id", id));
+}
+
+/** Elimina la salida y devuelve las rutas de sus fotos/archivos (para borrarlos). */
+export async function eliminarSalida(id: number): Promise<string[]> {
+  const supabase = await createClient();
+  const archivos = revisar(await supabase.from("salida_archivos").select("ruta").eq("salida_id", id)) as { ruta: string }[];
+  revisar(await supabase.from("salidas").delete().eq("id", id));
+  return archivos.map((a) => a.ruta);
+}
+
+export async function agregarArchivoSalida(salidaId: number, ruta: string, nombre: string) {
+  const supabase = await createClient();
+  revisar(await supabase.from("salida_archivos").insert({ salida_id: salidaId, ruta, nombre }));
+}
+
+export async function quitarArchivoSalida(id: number): Promise<string | null> {
+  const supabase = await createClient();
+  const f = revisar(await supabase.from("salida_archivos").delete().eq("id", id).select("ruta").maybeSingle()) as { ruta: string } | null;
+  return f?.ruta ?? null;
+}
+
+/** Lista liviana de expedientes para elegir uno (agenda). */
+export async function listarExpedientesSimple(): Promise<{ id: number; codigo: string; predio: string; estado: EstadoExpediente }[]> {
+  const supabase = await createClient();
+  return revisar(await supabase.from("expedientes").select("id, codigo, predio, estado").order("updated_at", { ascending: false })) as {
+    id: number;
+    codigo: string;
+    predio: string;
+    estado: EstadoExpediente;
+  }[];
 }

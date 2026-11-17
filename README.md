@@ -13,6 +13,7 @@ App para controlar el checklist de los expedientes de **subdivisión de predios 
 - Panel **Requiere atención**: certificados vencidos o por vencer y expedientes detenidos (enviado sin respuesta 30 días, en observación 10, listo sin enviar 7, sin avances 30; ver `lib/plazos.ts`). En la app de escritorio, además, una notificación al día.
 - Mapa del KMZ/KML adjunto (satélite o calles) con la superficie y el perímetro de cada polígono; de fondo, los KMZ de los demás expedientes.
 - **Mapa de predios** (menú *Mapa*): todos los KMZ juntos, coloreados por estado, con leyenda para mostrar u ocultar cada estado.
+- **Agenda de terreno** (menú *Agenda*): salidas por semana con expediente, horario, quiénes van y qué equipos llevan; avisa choques de personas o equipos. Al volver se marca *Realizada* con notas y fotos, y queda en el historial del expediente. Los equipos se mantienen en la misma página.
 - Contraseña temporal para otra persona del equipo (*Mi perfil → Equipo → Contraseña*), si olvidó la suya.
 - Visita automática a Supabase cada 3 días (`.github/workflows/mantener-supabase.yml`) para que el plan gratis no pause el proyecto.
 - Usuarios con nombre de usuario y contraseña (cuentas de Supabase). Quitar a alguien del equipo lo **desactiva**: nunca se borra, y su nombre sigue en el historial.

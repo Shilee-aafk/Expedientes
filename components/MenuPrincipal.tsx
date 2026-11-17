@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { EtiquetaBarra } from "./EtiquetaBarra";
-import { IconoExpedientes, IconoMapa, IconoNuevo, IconoPerfil, IconoPlantilla } from "./Iconos";
+import { IconoAgenda, IconoExpedientes, IconoMapa, IconoNuevo, IconoPerfil, IconoPlantilla } from "./Iconos";
 
 const enlaces = [
   { href: "/expedientes", texto: "Expedientes", Icono: IconoExpedientes },
   { href: "/mapa", texto: "Mapa", Icono: IconoMapa },
+  { href: "/agenda", texto: "Agenda", Icono: IconoAgenda },
   { href: "/expedientes/nuevo", texto: "Nuevo", Icono: IconoNuevo },
   { href: "/configuracion/plantilla", texto: "Plantilla", Icono: IconoPlantilla },
   { href: "/perfil", texto: "Perfil", Icono: IconoPerfil },
@@ -15,9 +16,10 @@ const enlaces = [
 
 function indiceActivo(ruta: string) {
   if (ruta.startsWith("/mapa")) return 1;
-  if (ruta.startsWith("/expedientes/nuevo")) return 2;
-  if (ruta.startsWith("/configuracion/plantilla")) return 3;
-  if (ruta.startsWith("/perfil")) return 4;
+  if (ruta.startsWith("/agenda")) return 2;
+  if (ruta.startsWith("/expedientes/nuevo")) return 3;
+  if (ruta.startsWith("/configuracion/plantilla")) return 4;
+  if (ruta.startsWith("/perfil")) return 5;
   if (ruta.startsWith("/expedientes")) return 0;
   return -1;
 }
@@ -31,7 +33,7 @@ export function MenuPrincipal() {
 
   return (
     <nav aria-label="Menú principal">
-      <div className="relative grid grid-rows-5 gap-1">
+      <div className="relative grid grid-rows-6 gap-1">
         <span
           aria-hidden
           className="liquido absolute inset-x-0 top-0 h-12 rounded-full transition-[transform,opacity] duration-500 ease-[var(--ease-spring)]"

@@ -1,3 +1,4 @@
+import type { Salida } from "./agenda";
 import { fechaVencimiento, hoyChile, resumen } from "./checklist";
 import type { EstadoExpediente, Item } from "./types";
 
@@ -71,6 +72,8 @@ export type Aviso = {
   texto: string;
   /** para ordenar: los más urgentes primero */
   orden: number;
+  /** enlace (si no, el expediente) */
+  href?: string;
 };
 
 type ExpedienteAvisos = DatosPlazo & {
@@ -106,4 +109,17 @@ export function avisos(expedientes: ExpedienteAvisos[], hoy: string): Aviso[] {
     if (p.detenido) lista.push({ ...base, gravedad: e.estado === "observado" ? "alta" : "media", texto: `${TEXTO_ESTADO[e.estado]}: ${p.detenido}`, orden: 50 - p.dias / 100 });
   }
   return lista.sort((a, b) => (a.gravedad === b.gravedad ? a.orden - b.orden : a.gravedad === "alta" ? -1 : 1));
+}
+
+/** Salidas a terreno que ya pasaron y siguen como programadas. */
+export function avisosSalidas(salidas: Salida[]): Aviso[] {
+  return salidas.map((s) => ({
+    expedienteId: s.expediente_id ?? 0,
+    codigo: s.expediente?.codigo ?? "Agenda",
+    predio: s.expediente?.predio ?? s.titulo ?? "Salida a terreno",
+    gravedad: "media" as const,
+    texto: `Salida a terreno del ${fechaCorta(s.fecha)}: ¿se realizó?`,
+    orden: 90,
+    href: `/agenda/${s.id}`,
+  }));
 }

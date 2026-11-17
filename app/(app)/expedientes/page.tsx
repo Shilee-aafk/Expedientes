@@ -4,8 +4,8 @@ import { PanelAvisos } from "@/components/PanelAvisos";
 import { Select } from "@/components/Select";
 import { Progreso } from "@/components/ui";
 import { hoyChile, resumen } from "@/lib/checklist";
-import { avisos, plazo } from "@/lib/plazos";
-import { listarExpedientes } from "@/lib/repo";
+import { avisos, avisosSalidas, plazo } from "@/lib/plazos";
+import { listarExpedientes, listarSalidas } from "@/lib/repo";
 import { requireUser } from "@/lib/sesion";
 import { ESTADOS, ETIQUETA_ESTADO } from "@/lib/types";
 
@@ -21,7 +21,9 @@ export default async function ExpedientesPage({
   const datos = await listarExpedientes();
   const hoy = hoyChile();
   const todas = datos.map((e) => ({ ...e, r: resumen(e.items, e.duenos.length, hoy), p: plazo(e, hoy) }));
-  const lista = avisos(datos, hoy);
+  // Si la base aún no tiene la agenda (esquema sin actualizar), simplemente no hay avisos de salidas
+  const sinCerrar = await listarSalidas({ estado: "programada", antesDe: hoy }).catch(() => []);
+  const lista = [...avisos(datos, hoy), ...avisosSalidas(sinCerrar)];
 
   const t = q?.trim().toLowerCase();
   const filas = todas.filter(

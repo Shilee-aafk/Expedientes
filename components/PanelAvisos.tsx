@@ -7,7 +7,7 @@ const VISIBLES = 6;
 function Fila({ a }: { a: Aviso }) {
   return (
     <li>
-      <Link href={`/expedientes/${a.expedienteId}`} className="group flex items-start gap-3 rounded-xl px-2 py-1.5 transition-colors hover:bg-glass-hover">
+      <Link href={a.href ?? `/expedientes/${a.expedienteId}`} className="group flex items-start gap-3 rounded-xl px-2 py-1.5 transition-colors hover:bg-glass-hover">
         <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${a.gravedad === "alta" ? "bg-danger" : "bg-warn"}`} />
         <span className="min-w-0 text-sm">
           <span className="font-medium group-hover:text-brand">{a.predio}</span>

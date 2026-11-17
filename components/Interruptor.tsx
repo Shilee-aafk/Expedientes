@@ -2,6 +2,8 @@
 
 type Props = {
   name?: string;
+  /** Valor enviado cuando está activado (para elegir varios con el mismo name) */
+  value?: string;
   label: React.ReactNode;
   checked?: boolean;
   defaultChecked?: boolean;
@@ -12,13 +14,14 @@ type Props = {
 };
 
 /** Botón "activar": se presiona sobre el texto; gris apagado, dorado encendido. */
-export function Interruptor({ name, label, checked, defaultChecked, onChange, enviarAlCambiar, disabled }: Props) {
+export function Interruptor({ name, value, label, checked, defaultChecked, onChange, enviarAlCambiar, disabled }: Props) {
   return (
     <label className="boton-activar">
       <input
         type="checkbox"
         role="switch"
         name={name}
+        value={value}
         checked={checked}
         defaultChecked={defaultChecked}
         disabled={disabled}

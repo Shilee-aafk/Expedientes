@@ -4,7 +4,7 @@ import { createClient } from "./supabase/server";
 export const BUCKET = "documentos";
 
 /** Carpetas válidas para adjuntos: expedientes/<id>/<item> o perfiles/<usuario>. */
-const CARPETA_VALIDA = /^(expedientes\/\d+\/\d+|perfiles\/[0-9a-f-]{36})$/;
+const CARPETA_VALIDA = /^(expedientes\/\d+\/\d+|perfiles\/[0-9a-f-]{36}|salidas\/\d+)$/;
 
 export function nombreLimpio(nombre: string) {
   return nombre.normalize("NFD").replace(/[^\w.-]+/g, "_").slice(-120) || "archivo";
